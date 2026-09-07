@@ -13,5 +13,7 @@ The end-to-end flow is:
 5. `GET /api/trips/{tripId}/balances`
 6. `GET /api/trips/{tripId}/settlements?strategy=OPTIMAL`
 
-Concrete payloads are added alongside each implemented API surface.
+Trip collaboration also supports invite-code joining, itinerary CRUD, and one vote per traveler per activity. A vote value of `0` clears the traveler's preference without deleting its audit row.
+
+Concrete expense payloads are added alongside that API surface.
 
