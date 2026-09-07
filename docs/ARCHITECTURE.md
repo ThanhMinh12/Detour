@@ -36,3 +36,5 @@ balance = expenses paid - assigned expense shares
 
 Across a trip, balances must always sum to zero.
 
+Suggested settlements are projections only. Recording a reimbursement adds a ledger entry and changes the derived balances; generating a suggestion never mutates financial history.
+

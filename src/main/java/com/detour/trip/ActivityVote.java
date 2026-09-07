@@ -23,7 +23,7 @@ public class ActivityVote {
     private Activity activity;
     @Column(name = "member_id", nullable = false)
     private UUID memberId;
-    @Column(nullable = false)
+    @Column(name = "vote_value", nullable = false)
     private int value;
 
     protected ActivityVote() {}
@@ -41,4 +41,3 @@ public class ActivityVote {
 
     public int getValue() { return value; }
 }
-

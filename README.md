@@ -28,5 +28,5 @@ Open <http://localhost:8080>. Data is stored under `./data` by default. To use P
 mvn verify
 ```
 
-See [Architecture](docs/ARCHITECTURE.md), [API examples](docs/API.md), and the [roadmap](docs/ROADMAP.md).
+See [Architecture](docs/ARCHITECTURE.md), [API examples](docs/API.md), the [settlement algorithm](docs/SETTLEMENT.md), and the [roadmap](docs/ROADMAP.md).
 

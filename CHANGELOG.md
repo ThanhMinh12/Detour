@@ -21,3 +21,11 @@
 - Added equal, exact, percentage, and itemized split modes.
 - Added shared line items plus deterministic largest-remainder allocation for tax, tip, and rounding cents.
 - Added receipt-level conservation and validation tests for the example dinner.
+
+### Step 4 — Balances and settlement
+
+- Added derived per-traveler net balances and an invariant check that the trip ledger sums to zero.
+- Added validated reimbursement records that reduce current balances without creating pairwise debt state.
+- Added deterministic greedy settlement and exact branch-and-bound minimum-transfer settlement for up to 12 non-zero balances.
+- Documented optimization behavior, complexity, fallback reporting, and non-mutating settlement projections.
+- Renamed the persisted vote column to remain compatible with both H2 and PostgreSQL reserved words.
