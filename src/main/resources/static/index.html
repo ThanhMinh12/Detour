@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173f35">
+  <title>Detour — plan together, settle fairly</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="/" aria-label="Detour home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 40 40"><path d="M9 30C13 19 20 25 22 14c1-5 4-7 9-7"/><path d="m26 4 5 3-4 5"/><circle cx="9" cy="30" r="3"/></svg>
+        </span>
+        <span>detour</span>
+      </a>
+
+      <div class="trip-switcher">
+        <label for="trip-select">Current trip</label>
+        <select id="trip-select" aria-label="Choose a trip"></select>
+      </div>
+
+      <nav class="nav-list" aria-label="Trip sections">
+        <a class="nav-item active" href="#overview">
+          <svg viewBox="0 0 24 24"><path d="M4 13h6V4H4v9Zm0 7h6v-4H4v4Zm10 0h6v-9h-6v9Zm0-16v4h6V4h-6Z"/></svg>
+          Overview
+        </a>
+        <a class="nav-item" href="#itinerary">
+          <svg viewBox="0 0 24 24"><path d="M6 3v3m12-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg>
+          Itinerary
+        </a>
+        <a class="nav-item" href="#expenses">
+          <svg viewBox="0 0 24 24"><path d="M4 6h16v13H4zM4 10h16m-5 5h2"/></svg>
+          Expenses
+        </a>
+        <a class="nav-item" href="#settle">
+          <svg viewBox="0 0 24 24"><path d="m7 7-4 4 4 4m-4-4h14m0-5 4 4-4 4m4-4H7"/></svg>
+          Settle up
+        </a>
+      </nav>
+
+      <div class="people-panel">
+        <div class="section-label"><span>Travelers</span><button class="icon-button" data-open="member-dialog" aria-label="Add traveler">+</button></div>
+        <div id="sidebar-members" class="member-stack"></div>
+      </div>
+
+      <div class="sidebar-footer">
+        <a href="/docs" target="_blank">API docs <span>↗</span></a>
+        <span>Detour MVP · v0.1</span>
+      </div>
+    </aside>
+
+    <main>
+      <header class="mobile-header">
+        <a class="brand" href="/"><span class="brand-mark">↗</span><span>detour</span></a>
+        <button id="mobile-menu" class="icon-button" aria-label="Open menu">☰</button>
+      </header>
+
+      <section id="empty-state" class="empty-state hidden">
+        <div class="empty-art" aria-hidden="true">
+          <span class="sun"></span><span class="road"></span><span class="pin">●</span>
+        </div>
+        <p class="eyebrow">A better way to go together</p>
+        <h1>Make plans. Share the tab.<br><em>Keep the good part.</em></h1>
+        <p>Create your first trip or load a complete Seoul example with an itinerary, four travelers, and itemized expenses.</p>
+        <div class="empty-actions">
+          <button class="button primary" data-open="trip-dialog">Create a trip</button>
+          <button class="button secondary" id="load-demo">Explore sample trip</button>
+        </div>
+      </section>
+
+      <div id="dashboard" class="dashboard hidden">
+        <section id="overview" class="trip-hero">
+          <div>
+            <p class="eyebrow" id="trip-kicker">UPCOMING ESCAPE</p>
+            <h1 id="trip-title"></h1>
+            <p class="trip-meta" id="trip-meta"></p>
+          </div>
+          <div class="hero-actions">
+            <button class="button secondary" id="copy-invite">Copy invite</button>
+            <button class="button primary" data-open="expense-dialog">+ Add expense</button>
+          </div>
+        </section>
+
+        <section class="stat-grid" aria-label="Trip summary">
+          <article class="stat-card warm">
+            <span class="stat-icon">◇</span><span class="stat-label">Group spend</span>
+            <strong id="total-spend">—</strong><small id="expense-count">No expenses yet</small>
+          </article>
+          <article class="stat-card green">
+            <span class="stat-icon">⌁</span><span class="stat-label">Plans saved</span>
+            <strong id="plan-count">—</strong><small id="confirmed-count">Nothing confirmed yet</small>
+          </article>
+          <article class="stat-card lilac">
+            <span class="stat-icon">↗</span><span class="stat-label">Payments to settle</span>
+            <strong id="transfer-count">—</strong><small>minimum-transfer result</small>
+          </article>
+        </section>
+
+        <div class="content-grid">
+          <section id="itinerary" class="panel itinerary-panel">
+            <div class="panel-heading">
+              <div><p class="eyebrow">THE PLAN</p><h2>Shared itinerary</h2></div>
+              <button class="button text" data-open="activity-dialog">+ Add a plan</button>
+            </div>
+            <div id="itinerary-list" class="timeline"></div>
+          </section>
+
+          <aside class="right-column">
+            <section id="settle" class="panel balance-panel">
+              <div class="panel-heading compact">
+                <div><p class="eyebrow">THE LEDGER</p><h2>Group balances</h2></div>
+                <span class="live-pill">Live</span>
+              </div>
+              <p class="muted">Paid minus personal share, including reimbursements.</p>
+              <div id="balance-list" class="balance-list"></div>
+              <div class="settlement-box">
+                <div class="settlement-title"><span>Shortest settle-up</span><small id="strategy-label">Optimal</small></div>
+                <div id="settlement-list"></div>
+              </div>
+            </section>
+          </aside>
+        </div>
+
+        <section id="expenses" class="panel expenses-panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">MONEY TRAIL</p><h2>Recent expenses</h2></div>
+            <button class="button text" data-open="expense-dialog">+ Add expense</button>
+          </div>
+          <div id="expense-list" class="expense-list"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="trip-dialog">
+    <form id="trip-form" method="dialog">
+      <div class="dialog-heading"><div><p class="eyebrow">NEW ADVENTURE</p><h2>Create a trip</h2></div><button class="dialog-close" value="cancel" aria-label="Close">×</button></div>
+      <div class="form-grid">
+        <label class="wide">Trip name<input name="name" required maxlength="120" placeholder="Seoul long weekend"></label>
+        <label class="wide">Destination<input name="destination" required maxlength="160" placeholder="Seoul, South Korea"></label>
+        <label>Start date<input name="startDate" type="date" required></label>
+        <label>End date<input name="endDate" type="date" required></label>
+        <label>Currency<select name="currency"><option>USD</option><option>KRW</option><option>EUR</option><option>GBP</option><option>JPY</option></select></label>
+        <span></span>
+        <label>Organizer name<input name="organizerName" required placeholder="Alex"></label>
+        <label>Organizer email<input name="organizerEmail" type="email" required placeholder="alex@example.com"></label>
+      </div>
+      <div class="dialog-actions"><button value="cancel" class="button secondary">Cancel</button><button type="submit" value="default" class="button primary">Create trip</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="member-dialog">
+    <form id="member-form" method="dialog">
+      <div class="dialog-heading"><div><p class="eyebrow">GROW THE CREW</p><h2>Add a traveler</h2></div><button class="dialog-close" value="cancel">×</button></div>
+      <div class="form-grid">
+        <label class="wide">Name<input name="displayName" required maxlength="100" placeholder="Jamie"></label>
+        <label class="wide">Email<input name="email" type="email" required placeholder="jamie@example.com"></label>
+      </div>
+      <div class="dialog-actions"><button value="cancel" class="button secondary">Cancel</button><button type="submit" value="default" class="button primary">Add traveler</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="activity-dialog">
+    <form id="activity-form" method="dialog">
+      <div class="dialog-heading"><div><p class="eyebrow">ADD TO THE MAP</p><h2>Save a plan</h2></div><button class="dialog-close" value="cancel">×</button></div>
+      <div class="form-grid">
+        <label class="wide">Name<input name="title" required maxlength="160" placeholder="Gwangjang Market lunch"></label>
+        <label>Type<select name="type"><option>ACTIVITY</option><option>FOOD</option><option>LODGING</option><option>TRANSIT</option></select></label>
+        <label>Status<select name="status"><option>PROPOSED</option><option>CONFIRMED</option></select></label>
+        <label>Date<input name="date" type="date" required></label>
+        <label>Time<input name="startTime" type="time"></label>
+        <label class="wide">Place<input name="place" maxlength="240" placeholder="Jongno-gu"></label>
+        <label>Proposed by<select name="proposedByMemberId" class="member-select"></select></label>
+        <label>Reservation reference<input name="reservationReference" maxlength="160" placeholder="Optional"></label>
+        <label class="wide">Notes<textarea name="notes" maxlength="2000" placeholder="Meet by the west gate…"></textarea></label>
+      </div>
+      <div class="dialog-actions"><button value="cancel" class="button secondary">Cancel</button><button type="submit" value="default" class="button primary">Save plan</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="expense-dialog" class="large-dialog">
+    <form id="expense-form" method="dialog">
+      <div class="dialog-heading"><div><p class="eyebrow">FAIR SHARE</p><h2>Add an expense</h2></div><button class="dialog-close" value="cancel">×</button></div>
+      <div class="form-grid">
+        <label class="wide">Description<input name="description" required maxlength="180" placeholder="Dinner at Jaha Son Mandu"></label>
+        <label>Paid by<select name="paidByMemberId" class="member-select" required></select></label>
+        <label>Category<select name="category"><option>FOOD</option><option>TRANSIT</option><option>ACTIVITY</option><option>LODGING</option><option>SHOPPING</option><option>OTHER</option></select></label>
+        <label>Date<input name="occurredOn" type="date" required></label>
+        <label>Split method<select name="splitMode" id="split-mode"><option value="EQUAL">Equally</option><option value="EXACT">Exact subtotal</option><option value="PERCENTAGE">Percentage</option><option value="ITEMIZED">By item</option></select></label>
+        <label>Food / base subtotal<input name="subtotal" id="expense-subtotal" type="number" min="0.01" step="0.01" required placeholder="90.00"></label>
+        <label>Tax<input name="tax" type="number" min="0" step="0.01" value="0"></label>
+        <label>Tip<input name="tip" type="number" min="0" step="0.01" value="0"></label>
+      </div>
+      <div id="split-editor" class="split-editor"></div>
+      <div class="dialog-actions"><span id="split-summary" class="split-summary"></span><button value="cancel" class="button secondary">Cancel</button><button type="submit" value="default" class="button primary">Add expense</button></div>
+    </form>
+  </dialog>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
+

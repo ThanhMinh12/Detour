@@ -22,6 +22,8 @@ mvn spring-boot:run
 
 Open <http://localhost:8080>. Data is stored under `./data` by default. To use PostgreSQL, set `DATABASE_URL`, `DATABASE_USERNAME`, and `DATABASE_PASSWORD`.
 
+On a fresh database, choose **Explore sample trip** to create the four-traveler dinner example plus a complete itinerary. The browser client supports all four split modes; the same workflows are available over REST.
+
 ## Verify
 
 ```bash

@@ -29,3 +29,10 @@
 - Added deterministic greedy settlement and exact branch-and-bound minimum-transfer settlement for up to 12 non-zero balances.
 - Documented optimization behavior, complexity, fallback reporting, and non-mutating settlement projections.
 - Renamed the persisted vote column to remain compatible with both H2 and PostgreSQL reserved words.
+
+### Step 5 — Web experience
+
+- Added a responsive trip dashboard with itinerary, expenses, balances, and minimum-transfer settlement views.
+- Added browser workflows for trips, travelers, activities, reservations, votes, and all four expense split modes.
+- Added a one-click, API-backed sample trip using the four-person itemized dinner example.
+- Added accessible empty, loading, error, mobile-navigation, and modal-form states without a frontend build dependency.

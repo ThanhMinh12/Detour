@@ -40,3 +40,5 @@ Trip collaboration also supports invite-code joining, itinerary CRUD, and one vo
 
 Shared items list every participant consuming that item. `EXACT` allocations use subtotal cents, `PERCENTAGE` allocations use basis points totaling `10000`, and `EQUAL` ignores allocation values.
 
+The web client builds the same payloads interactively. Itemized mode derives `subtotalCents` from receipt lines and permits any subset of travelers on each shared item.
+
