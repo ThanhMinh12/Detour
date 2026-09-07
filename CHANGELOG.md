@@ -39,7 +39,7 @@
 
 ### Step 6 — Delivery
 
-- Added a tested multi-stage, non-root container image and PostgreSQL Compose stack.
+- Added a multi-stage, non-root container image and PostgreSQL Compose stack.
 - Added Spring Boot health probes for container and load-balancer checks.
 - Added GitHub Actions verification on pushes and pull requests.
 - Documented a practical ECS, ECR, RDS, Secrets Manager, and CloudWatch production path plus evidence-based service extraction triggers.
