@@ -30,5 +30,6 @@ On a fresh database, choose **Explore sample trip** to create the four-traveler 
 mvn verify
 ```
 
-See [Architecture](docs/ARCHITECTURE.md), [API examples](docs/API.md), the [settlement algorithm](docs/SETTLEMENT.md), and the [roadmap](docs/ROADMAP.md).
+Container users can run `docker compose up --build` for the app plus PostgreSQL.
 
+See [Architecture](docs/ARCHITECTURE.md), [API examples](docs/API.md), the [settlement algorithm](docs/SETTLEMENT.md), [deployment](docs/DEPLOYMENT.md), and the [roadmap](docs/ROADMAP.md).

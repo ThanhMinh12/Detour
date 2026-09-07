@@ -36,3 +36,10 @@
 - Added browser workflows for trips, travelers, activities, reservations, votes, and all four expense split modes.
 - Added a one-click, API-backed sample trip using the four-person itemized dinner example.
 - Added accessible empty, loading, error, mobile-navigation, and modal-form states without a frontend build dependency.
+
+### Step 6 — Delivery
+
+- Added a tested multi-stage, non-root container image and PostgreSQL Compose stack.
+- Added Spring Boot health probes for container and load-balancer checks.
+- Added GitHub Actions verification on pushes and pull requests.
+- Documented a practical ECS, ECR, RDS, Secrets Manager, and CloudWatch production path plus evidence-based service extraction triggers.
