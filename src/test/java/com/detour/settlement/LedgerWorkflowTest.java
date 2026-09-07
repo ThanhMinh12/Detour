@@ -41,6 +41,10 @@ class LedgerWorkflowTest {
 
         assertThat(balances.balances(trip.getId())).extracting(BalanceService.Balance::amountCents)
                 .containsExactly(9_100L, -3_900L, -3_250L, -1_950L);
+
+        balances.reimburse(trip.getId(), b.getId(), a.getId(), 3_900, "Settled dinner share", LocalDate.now());
+
+        assertThat(balances.balances(trip.getId())).extracting(BalanceService.Balance::amountCents)
+                .containsExactly(5_200L, 0L, -3_250L, -1_950L);
     }
 }
-

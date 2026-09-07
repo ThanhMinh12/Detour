@@ -67,6 +67,7 @@
         <p>Create your first trip or load a complete Seoul example with an itinerary, four travelers, and itemized expenses.</p>
         <div class="empty-actions">
           <button class="button primary" data-open="trip-dialog">Create a trip</button>
+          <button class="button secondary" data-open="join-dialog">Join with a code</button>
           <button class="button secondary" id="load-demo">Explore sample trip</button>
         </div>
       </section>
@@ -163,6 +164,18 @@
     </form>
   </dialog>
 
+  <dialog id="join-dialog">
+    <form id="join-form" method="dialog">
+      <div class="dialog-heading"><div><p class="eyebrow">YOU'RE INVITED</p><h2>Join a trip</h2></div><button class="dialog-close" value="cancel">×</button></div>
+      <div class="form-grid">
+        <label class="wide">Invite code<input name="inviteCode" required minlength="8" maxlength="12" placeholder="A1B2C3D4"></label>
+        <label>Name<input name="displayName" required maxlength="100" placeholder="Jamie"></label>
+        <label>Email<input name="email" type="email" required placeholder="jamie@example.com"></label>
+      </div>
+      <div class="dialog-actions"><button value="cancel" class="button secondary">Cancel</button><button type="submit" value="default" class="button primary">Join trip</button></div>
+    </form>
+  </dialog>
+
   <dialog id="activity-dialog">
     <form id="activity-form" method="dialog">
       <div class="dialog-heading"><div><p class="eyebrow">ADD TO THE MAP</p><h2>Save a plan</h2></div><button class="dialog-close" value="cancel">×</button></div>
@@ -203,4 +216,3 @@
   <script src="/app.js" defer></script>
 </body>
 </html>
-

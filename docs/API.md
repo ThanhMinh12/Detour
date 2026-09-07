@@ -42,3 +42,4 @@ Shared items list every participant consuming that item. `EXACT` allocations use
 
 The web client builds the same payloads interactively. Itemized mode derives `subtotalCents` from receipt lines and permits any subset of travelers on each shared item.
 
+Suggested transfers can be accepted from the web client or recorded with `POST /api/trips/{tripId}/reimbursements`. This creates a ledger entry; requesting `/settlements` alone never changes balances.

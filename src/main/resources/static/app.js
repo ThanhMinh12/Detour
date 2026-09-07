@@ -11,13 +11,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindEvents();
   seedDateInputs();
   await loadTrips();
+  const inviteCode = new URLSearchParams(location.search).get("invite");
+  if (inviteCode) {
+    $("#join-form [name=inviteCode]").value = inviteCode;
+    $("#join-dialog").showModal();
+  }
 });
 
 function bindEvents() {
   document.addEventListener("click", event => {
     const trigger = event.target.closest("[data-open]");
     if (!trigger) return;
-    if (trigger.dataset.open !== "trip-dialog" && !state.trip) {
+    if (!["trip-dialog", "join-dialog"].includes(trigger.dataset.open) && !state.trip) {
       toast("Create or select a trip first", true);
       return;
     }
@@ -29,6 +34,7 @@ function bindEvents() {
   $("#trip-select").addEventListener("change", event => selectTrip(event.target.value));
   $("#trip-form").addEventListener("submit", createTrip);
   $("#member-form").addEventListener("submit", addMember);
+  $("#join-form").addEventListener("submit", joinTrip);
   $("#activity-form").addEventListener("submit", addActivity);
   $("#expense-form").addEventListener("submit", addExpense);
   $("#split-mode").addEventListener("change", renderSplitEditor);
@@ -195,8 +201,10 @@ function renderBalances() {
   }).join("");
   const transfers = state.settlement.transfers;
   $("#settlement-list").innerHTML = transfers.length ? transfers.map(value => `
-    <div class="transfer"><span>${escapeHtml(value.fromName)}</span><strong>${money(value.amountCents)} →</strong><span>${escapeHtml(value.toName)}</span></div>`).join("")
+    <div class="transfer"><span>${escapeHtml(value.fromName)}</span><strong>${money(value.amountCents)} →</strong><span>${escapeHtml(value.toName)}</span><button class="mark-paid" data-from="${value.fromMemberId}" data-to="${value.toMemberId}" data-amount="${value.amountCents}">Paid</button></div>`).join("")
     : '<div class="blank-list">Everyone is settled.</div>';
+  $$(".mark-paid", $("#settlement-list"))
+    .forEach(button => button.addEventListener("click", () => recordPayment(button)));
 }
 
 function populateMemberSelects() {
@@ -282,6 +290,29 @@ async function addMember(event) {
   } catch (error) { toast(error.message, true); }
 }
 
+async function joinTrip(event) {
+  if (event.submitter?.value === "cancel") return;
+  event.preventDefault();
+  const form = event.currentTarget;
+  const fields = Object.fromEntries(new FormData(form));
+  const code = fields.inviteCode.trim().toUpperCase();
+  try {
+    await api(`/api/trips/join/${encodeURIComponent(code)}`, {
+      method: "POST",
+      body: JSON.stringify({ displayName: fields.displayName, email: fields.email })
+    });
+    form.closest("dialog").close();
+    form.reset();
+    history.replaceState({}, "", location.pathname);
+    const trips = await api("/api/trips");
+    const joined = trips.find(trip => trip.inviteCode === code);
+    state.trips = trips;
+    renderTripSelect();
+    await selectTrip(joined?.id || trips[0]?.id);
+    toast("You're in — welcome to the trip");
+  } catch (error) { toast(error.message, true); }
+}
+
 async function addActivity(event) {
   if (event.submitter?.value === "cancel") return;
   event.preventDefault();
@@ -361,6 +392,27 @@ async function vote(activityId) {
     });
     await selectTrip(state.trip.id);
   } catch (error) { toast(error.message, true); }
+}
+
+async function recordPayment(button) {
+  button.disabled = true;
+  try {
+    await api(`/api/trips/${state.trip.id}/reimbursements`, {
+      method: "POST",
+      body: JSON.stringify({
+        fromMemberId: button.dataset.from,
+        toMemberId: button.dataset.to,
+        amountCents: Number(button.dataset.amount),
+        note: "Recorded from settlement suggestion",
+        paidOn: new Date().toISOString().slice(0, 10)
+      })
+    });
+    await selectTrip(state.trip.id);
+    toast("Payment recorded and balances refreshed");
+  } catch (error) {
+    button.disabled = false;
+    toast(error.message, true);
+  }
 }
 
 async function createDemo() {

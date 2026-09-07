@@ -43,3 +43,9 @@
 - Added Spring Boot health probes for container and load-balancer checks.
 - Added GitHub Actions verification on pushes and pull requests.
 - Documented a practical ECS, ECR, RDS, Secrets Manager, and CloudWatch production path plus evidence-based service extraction triggers.
+
+### Step 7 — Complete the collaboration loop
+
+- Added invite-code joining from both copied links and the empty state.
+- Added one-click recording of suggested repayments with immediate balance and settlement refresh.
+- Documented the trusted-access constraint until authentication and authorization land.
