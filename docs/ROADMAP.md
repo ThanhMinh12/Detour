@@ -9,10 +9,12 @@
 
 ## Next
 
-- OIDC authentication, role-based trip permissions, and expiring invite links.
+- OIDC authentication, enforced trip permissions, and hashed, expiring invite links (public-launch blocker).
+- Authorization isolation tests, security headers, rate limiting, and HTTPS-only traffic.
+- Auditable expense corrections, idempotent financial writes, and optimistic concurrency.
+- Browser end-to-end and accessibility coverage for the complete trip and settlement loop.
 - Comments, attachments, notifications, and real-time collaboration.
 - Receipt OCR with a human-confirmation workflow.
 - Currency-specific minor-unit metadata and explicit FX conversion records.
-- PostgreSQL migrations with Flyway and an append-only audit/event log.
+- Append-only audit/event log for corrections and security-sensitive changes.
 - Outbox-driven notifications and cached read models on AWS.
-

@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### Step 8 — AWS beta readiness
+
+- Added Flyway-owned schema migrations and switched Hibernate from schema mutation to validation.
+- Added a strict production profile with required database configuration, graceful shutdown, safe error detail, health probes, connection-pool bounds, and structured logs.
+- Added CloudFormation for ECR, ALB, ECS Fargate, isolated RDS PostgreSQL, RDS-managed secrets, CloudWatch, autoscaling, optional ACM/Route 53, backups, and deletion protection.
+- Added a GitHub Actions deployment workflow using branch-scoped OIDC credentials and immutable commit images.
+- Tuned the AWS beta profile to one small ARM Fargate task, single-AZ micro RDS, seven-day logs, ten retained images, autoscaling to two tasks, service alarms, and an optional monthly budget warning.
+- Added explicit initial loading, timeout, retry, mobile backdrop, keyboard focus, reduced-motion, and active-traveler states to the browser client.
+- Added browser security headers, a restrictive Content Security Policy, HSTS on HTTPS, and no-store caching for API responses.
+- Documented the AWS bootstrap/deployment flow and the remaining public-launch blockers.
+
 ### Step 1 — Foundation
 
 - Initialized the Spring Boot 3 / Java 21 project.

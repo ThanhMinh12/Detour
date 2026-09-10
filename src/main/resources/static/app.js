@@ -1,11 +1,11 @@
 const state = {
-  trips: [], trip: null, members: [], activities: [], expenses: [], balances: [], settlement: null
+  trips: [], trip: null, members: [], activities: [], expenses: [], balances: [], settlement: null,
+  activeMemberId: null
 };
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const icons = { FOOD: "♨", TRANSIT: "→", ACTIVITY: "◇", LODGING: "⌂", SHOPPING: "◌", OTHER: "·" };
-const avatarColors = ["#f5d88a", "#efb9a6", "#b9d9ce", "#cfc5e7", "#bcd5ec", "#f2c8d8"];
 
 document.addEventListener("DOMContentLoaded", async () => {
   bindEvents();
@@ -32,6 +32,7 @@ function bindEvents() {
   });
 
   $("#trip-select").addEventListener("change", event => selectTrip(event.target.value));
+  $("#active-member").addEventListener("change", event => selectMember(event.target.value));
   $("#trip-form").addEventListener("submit", createTrip);
   $("#member-form").addEventListener("submit", addMember);
   $("#join-form").addEventListener("submit", joinTrip);
@@ -42,29 +43,42 @@ function bindEvents() {
     .forEach(input => input.addEventListener("input", updateSplitSummary));
   $("#load-demo").addEventListener("click", createDemo);
   $("#copy-invite").addEventListener("click", copyInvite);
-  $("#mobile-menu").addEventListener("click", () => $(".sidebar").classList.toggle("open"));
+  $("#mobile-menu").addEventListener("click", () => toggleSidebar());
+  $("#sidebar-backdrop").addEventListener("click", () => toggleSidebar(false));
+  $("#retry-load").addEventListener("click", () => loadTrips(state.trip?.id));
   $$(".nav-item").forEach(item => item.addEventListener("click", () => {
     $$(".nav-item").forEach(link => link.classList.remove("active"));
     item.classList.add("active");
-    $(".sidebar").classList.remove("open");
+    toggleSidebar(false);
   }));
 }
 
 async function api(path, options = {}) {
-  const response = await fetch(path, {
-    ...options,
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) }
-  });
-  if (!response.ok) {
-    let problem = {};
-    try { problem = await response.json(); } catch (_) { /* no response body */ }
-    throw new Error(problem.message || `Request failed (${response.status})`);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetch(path, {
+      ...options,
+      signal: options.signal || controller.signal,
+      headers: { "Content-Type": "application/json", ...(options.headers || {}) }
+    });
+    if (!response.ok) {
+      let problem = {};
+      try { problem = await response.json(); } catch (_) { /* no response body */ }
+      throw new Error(problem.message || `Request failed (${response.status})`);
+    }
+    if (response.status === 204) return null;
+    return response.json();
+  } catch (error) {
+    if (error.name === "AbortError") throw new Error("The server took too long to respond. Please try again.");
+    throw error;
+  } finally {
+    clearTimeout(timeout);
   }
-  if (response.status === 204) return null;
-  return response.json();
 }
 
 async function loadTrips(preferredId) {
+  if (!state.trip) showLoading();
   try {
     state.trips = await api("/api/trips");
     renderTripSelect();
@@ -77,15 +91,15 @@ async function loadTrips(preferredId) {
     $("#trip-select").value = selected.id;
     await selectTrip(selected.id);
   } catch (error) {
-    showEmpty();
-    toast(error.message, true);
+    showLoadError(error.message);
   }
 }
 
 async function selectTrip(tripId) {
   if (!tripId) return;
-  const trip = state.trips.find(value => value.id === tripId) || await api(`/api/trips/${tripId}`);
+  setDashboardBusy(true);
   try {
+    const trip = state.trips.find(value => value.id === tripId) || await api(`/api/trips/${tripId}`);
     const [members, activities, expenses, balancePayload, settlement] = await Promise.all([
       api(`/api/trips/${tripId}/members`),
       api(`/api/trips/${tripId}/activities`),
@@ -94,17 +108,24 @@ async function selectTrip(tripId) {
       api(`/api/trips/${tripId}/settlements?strategy=OPTIMAL`)
     ]);
     Object.assign(state, { trip, members, activities, expenses, balances: balancePayload.balances, settlement });
+    const rememberedMember = localStorage.getItem(`detour.member.${tripId}`);
+    state.activeMemberId = members.some(value => value.id === rememberedMember) ? rememberedMember : members[0]?.id || null;
     localStorage.setItem("detour.trip", tripId);
     renderDashboard();
   } catch (error) {
-    toast(error.message, true);
+    if (state.trip) toast(error.message, true);
+    else showLoadError(error.message);
+  } finally {
+    setDashboardBusy(false);
   }
 }
 
 function showEmpty() {
   state.trip = null;
+  $("#loading-state").classList.add("hidden");
   $("#empty-state").classList.remove("hidden");
   $("#dashboard").classList.add("hidden");
+  $("#viewer-panel").classList.add("hidden");
   $("#trip-select").innerHTML = '<option value="">No trips yet</option>';
   $("#sidebar-members").innerHTML = "";
 }
@@ -115,6 +136,7 @@ function renderTripSelect() {
 }
 
 function renderDashboard() {
+  $("#loading-state").classList.add("hidden");
   $("#empty-state").classList.add("hidden");
   $("#dashboard").classList.remove("hidden");
   const trip = state.trip;
@@ -142,6 +164,11 @@ function renderMembers() {
       ${avatar(memberValue.displayName, index)}
       <span>${escapeHtml(memberValue.displayName)}${memberValue.role === "ORGANIZER" ? " · host" : ""}</span>
     </div>`).join("");
+  const viewer = $("#active-member");
+  viewer.innerHTML = state.members.map(memberValue =>
+    `<option value="${memberValue.id}">${escapeHtml(memberValue.displayName)}</option>`).join("");
+  viewer.value = state.activeMemberId || "";
+  $("#viewer-panel").classList.toggle("hidden", !state.members.length);
 }
 
 function renderActivities() {
@@ -166,7 +193,7 @@ function renderActivities() {
             <span>${escapeHtml(activityValue.place || activityValue.status.toLowerCase())}</span>
             ${activityValue.reservationReference ? `<span class="reservation">Booked · ${escapeHtml(activityValue.reservationReference)}</span>` : ""}
           </div>
-          <button class="vote-button" data-vote="${activityValue.id}" title="Vote as ${escapeHtml(state.members[0]?.displayName || "organizer")}">▲ <span>${activityValue.voteScore}</span></button>
+          <button class="vote-button" data-vote="${activityValue.id}" title="Vote as ${escapeHtml(activeMember()?.displayName || "traveler")}" aria-label="Vote for ${escapeHtml(activityValue.title)} as ${escapeHtml(activeMember()?.displayName || "traveler")}">▲ <span>${activityValue.voteScore}</span></button>
         </article>`).join("")}
     </div>`).join("");
   $$('[data-vote]', target).forEach(button => button.addEventListener("click", () => vote(button.dataset.vote)));
@@ -193,7 +220,7 @@ function renderBalances() {
   $("#balance-list").innerHTML = state.balances.map((balance, index) => {
     const positive = balance.amountCents > 0;
     const settled = balance.amountCents === 0;
-    return `<div class="balance-row">
+    return `<div class="balance-row ${balance.memberId === state.activeMemberId ? "current" : ""}">
       ${avatar(balance.displayName, index)}
       <div class="balance-name">${escapeHtml(balance.displayName)}<span class="balance-label">${settled ? "settled" : positive ? "gets back" : "owes"}</span></div>
       <span class="balance-amount ${settled ? "" : positive ? "positive" : "negative"}">${positive ? "+" : balance.amountCents < 0 ? "−" : ""}${money(Math.abs(balance.amountCents))}</span>
@@ -297,7 +324,7 @@ async function joinTrip(event) {
   const fields = Object.fromEntries(new FormData(form));
   const code = fields.inviteCode.trim().toUpperCase();
   try {
-    await api(`/api/trips/join/${encodeURIComponent(code)}`, {
+    const membership = await api(`/api/trips/join/${encodeURIComponent(code)}`, {
       method: "POST",
       body: JSON.stringify({ displayName: fields.displayName, email: fields.email })
     });
@@ -305,10 +332,11 @@ async function joinTrip(event) {
     form.reset();
     history.replaceState({}, "", location.pathname);
     const trips = await api("/api/trips");
-    const joined = trips.find(trip => trip.inviteCode === code);
+    const joinedTrip = trips.find(trip => trip.inviteCode === code);
+    if (joinedTrip) localStorage.setItem(`detour.member.${joinedTrip.id}`, membership.id);
     state.trips = trips;
     renderTripSelect();
-    await selectTrip(joined?.id || trips[0]?.id);
+    await selectTrip(joinedTrip?.id || trips[0]?.id);
     toast("You're in — welcome to the trip");
   } catch (error) { toast(error.message, true); }
 }
@@ -385,10 +413,10 @@ async function addExpense(event) {
 }
 
 async function vote(activityId) {
-  if (!state.members.length) return;
+  if (!state.activeMemberId) return;
   try {
     await api(`/api/trips/${state.trip.id}/activities/${activityId}/votes`, {
-      method: "POST", body: JSON.stringify({ memberId: state.members[0].id, value: 1 })
+      method: "POST", body: JSON.stringify({ memberId: state.activeMemberId, value: 1 })
     });
     await selectTrip(state.trip.id);
   } catch (error) { toast(error.message, true); }
@@ -524,6 +552,51 @@ function member(id) {
   return state.members.find(memberValue => memberValue.id === id);
 }
 
+function activeMember() {
+  return member(state.activeMemberId);
+}
+
+function selectMember(memberId) {
+  if (!state.members.some(value => value.id === memberId)) return;
+  state.activeMemberId = memberId;
+  localStorage.setItem(`detour.member.${state.trip.id}`, memberId);
+  renderActivities();
+  renderBalances();
+  toast(`Viewing as ${activeMember().displayName}`);
+}
+
+function showLoading() {
+  $("#loading-title").textContent = "Packing the essentials…";
+  $("#loading-message").textContent = "Loading trips, plans, and shared balances.";
+  $("#retry-load").classList.add("hidden");
+  $("#loading-state").classList.remove("hidden");
+  $("#empty-state").classList.add("hidden");
+  $("#dashboard").classList.add("hidden");
+}
+
+function showLoadError(message) {
+  $("#loading-title").textContent = "We hit a roadblock.";
+  $("#loading-message").textContent = message;
+  $("#retry-load").classList.remove("hidden");
+  $("#loading-state").classList.remove("hidden");
+  $("#empty-state").classList.add("hidden");
+  $("#dashboard").classList.add("hidden");
+}
+
+function setDashboardBusy(busy) {
+  $("#dashboard").classList.toggle("is-loading", busy && !$("#dashboard").classList.contains("hidden"));
+  $("#dashboard").setAttribute("aria-busy", String(busy));
+  $("#trip-select").disabled = busy;
+}
+
+function toggleSidebar(force) {
+  const sidebar = $(".sidebar");
+  const open = typeof force === "boolean" ? force : !sidebar.classList.contains("open");
+  sidebar.classList.toggle("open", open);
+  $("#sidebar-backdrop").classList.toggle("open", open);
+  $("#mobile-menu").setAttribute("aria-expanded", String(open));
+}
+
 function money(cents) {
   return new Intl.NumberFormat(undefined, {
     style: "currency", currency: state.trip?.currency || "USD", maximumFractionDigits: 2
@@ -563,7 +636,7 @@ function initials(name) {
 }
 
 function avatar(name, index) {
-  return `<span class="avatar" style="--avatar:${avatarColors[index % avatarColors.length]}">${escapeHtml(initials(name))}</span>`;
+  return `<span class="avatar avatar-${index % 6}">${escapeHtml(initials(name))}</span>`;
 }
 
 function escapeHtml(value) {

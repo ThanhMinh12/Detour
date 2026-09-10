@@ -1,0 +1,31 @@
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    hikari:
+      maximum-pool-size: ${DATABASE_POOL_SIZE:5}
+      minimum-idle: ${DATABASE_MIN_IDLE:1}
+      connection-timeout: 10000
+      validation-timeout: 3000
+  lifecycle:
+    timeout-per-shutdown-phase: 25s
+
+server:
+  error:
+    include-message: never
+
+management:
+  endpoint:
+    health:
+      show-details: never
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+logging:
+  structured:
+    format:
+      console: logstash

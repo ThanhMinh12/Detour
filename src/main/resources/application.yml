@@ -7,16 +7,20 @@ spring:
     password: ${DATABASE_PASSWORD:}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     open-in-view: false
     properties:
       hibernate:
         jdbc:
           time_zone: UTC
+  flyway:
+    baseline-on-migrate: true
   jackson:
     default-property-inclusion: non_null
 
 server:
+  shutdown: graceful
+  forward-headers-strategy: framework
   error:
     include-message: always
 
@@ -33,3 +37,8 @@ management:
     health:
       probes:
         enabled: true
+
+logging:
+  level:
+    root: INFO
+    com.detour: INFO
