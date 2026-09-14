@@ -193,7 +193,7 @@
 
   <dialog id="trip-dialog">
     <form id="trip-form" method="dialog">
-      <div class="dialog-heading"><div><p class="eyebrow">NEW ADVENTURE</p><h2>Create a trip</h2></div><button class="dialog-close" value="cancel" aria-label="Close">×</button></div>
+      <div class="dialog-heading"><div><p class="eyebrow">NEW ADVENTURE</p><h2>Create a trip</h2></div><button class="dialog-close" value="cancel" formnovalidate aria-label="Close">×</button></div>
       <div class="form-grid">
         <label class="wide">Trip name<input name="name" required maxlength="120" placeholder="Seoul long weekend"></label>
         <label class="wide">Destination<input name="destination" required maxlength="160" placeholder="Seoul, South Korea"></label>
@@ -202,7 +202,7 @@
         <label>Currency<select name="currency"><option>USD</option><option>KRW</option><option>EUR</option><option>GBP</option><option>JPY</option></select></label>
         <p class="form-note wide">You’ll be added as the trip organizer automatically.</p>
       </div>
-      <div class="dialog-actions"><button value="cancel" class="button secondary">Cancel</button><button type="submit" value="default" class="button primary">Create trip</button></div>
+      <div class="dialog-actions"><button value="cancel" formnovalidate class="button secondary">Cancel</button><button type="submit" value="default" class="button primary">Create trip</button></div>
     </form>
   </dialog>
 
