@@ -4,7 +4,9 @@ Detour is a collaborative trip planner with fair, auditable group expense splitt
 
 ## MVP capabilities
 
+- Create an account, sign in once, and keep a database-backed browser session.
 - Create trips and invite travelers.
+- Keep each trip private to its joined members; identity-sensitive actions use the signed-in account.
 - Build and vote on a shared itinerary; keep reservation details beside each plan.
 - Log equal, exact, percentage, or itemized expenses.
 - Split shared line items and allocate tax/tip proportionally using exact cent arithmetic.
@@ -15,17 +17,23 @@ Detour is a collaborative trip planner with fair, auditable group expense splitt
 
 ## Run locally
 
-Requirements: Java 21 and Maven 3.9+.
+The closest match to production uses Docker and PostgreSQL:
+
+```bash
+docker compose up --build
+```
+
+For the lighter embedded-database option, use Java 21 and Maven 3.9+:
 
 ```bash
 mvn spring-boot:run
 ```
 
-Open <http://localhost:8080>. Data is stored under `./data` by default. To use PostgreSQL, set `DATABASE_URL`, `DATABASE_USERNAME`, and `DATABASE_PASSWORD`.
+Open <http://localhost:8080> and create an account. Docker keeps PostgreSQL data in a named volume; the Maven option stores H2 data under `./data`. A standalone PostgreSQL instance can be selected with `DATABASE_URL`, `DATABASE_USERNAME`, and `DATABASE_PASSWORD`.
 
-On a fresh database, choose **Explore sample trip** to create the four-traveler dinner example plus a complete itinerary. The browser client supports all four split modes; the same workflows are available over REST.
+After signing in, choose **Explore sample trip** to create the four-traveler dinner example plus a complete itinerary. The browser client supports all four split modes; the same workflows are available over REST.
 
-Invite links carry the trip's invite code into the join form. Authentication is intentionally deferred in this MVP, so deploy behind trusted access until OIDC and trip-level authorization are added.
+Invite links carry the trip's invite code through sign-in or registration and then join the current account. An account sees only trips it has created or joined.
 
 ## Deploy to AWS
 

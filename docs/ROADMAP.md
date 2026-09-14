@@ -6,11 +6,12 @@
 - Equal, exact, percentage, and itemized expense splits.
 - Net balances, reimbursements, and settlement suggestions.
 - Responsive web client and REST/OpenAPI documentation.
+- Email/password accounts, persistent database sessions, CSRF protection, and enforced trip membership.
 
 ## Next
 
-- OIDC authentication, enforced trip permissions, and hashed, expiring invite links (public-launch blocker).
-- Authorization isolation tests, security headers, rate limiting, and HTTPS-only traffic.
+- Email verification, password recovery, hashed expiring invite links, rate limiting, and HTTPS-only traffic (public-launch blockers).
+- Broader authorization isolation tests and security-event alerting.
 - Auditable expense corrections, idempotent financial writes, and optimistic concurrency.
 - Browser end-to-end and accessibility coverage for the complete trip and settlement loop.
 - Comments, attachments, notifications, and real-time collaboration.

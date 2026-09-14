@@ -1,6 +1,6 @@
 const state = {
   trips: [], trip: null, members: [], activities: [], expenses: [], balances: [], settlement: null,
-  activeMemberId: null
+  activeMemberId: null, user: null, csrf: null, authMode: "login"
 };
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -10,12 +10,7 @@ const icons = { FOOD: "♨", TRANSIT: "→", ACTIVITY: "◇", LODGING: "⌂", SH
 document.addEventListener("DOMContentLoaded", async () => {
   bindEvents();
   seedDateInputs();
-  await loadTrips();
-  const inviteCode = new URLSearchParams(location.search).get("invite");
-  if (inviteCode) {
-    $("#join-form [name=inviteCode]").value = inviteCode;
-    $("#join-dialog").showModal();
-  }
+  await bootstrapAuth();
 });
 
 function bindEvents() {
@@ -31,8 +26,10 @@ function bindEvents() {
     document.getElementById(trigger.dataset.open).showModal();
   });
 
+  $("#auth-form").addEventListener("submit", submitAuth);
+  $("#auth-toggle").addEventListener("click", toggleAuthMode);
+  $("#logout-button").addEventListener("click", logout);
   $("#trip-select").addEventListener("change", event => selectTrip(event.target.value));
-  $("#active-member").addEventListener("change", event => selectMember(event.target.value));
   $("#trip-form").addEventListener("submit", createTrip);
   $("#member-form").addEventListener("submit", addMember);
   $("#join-form").addEventListener("submit", joinTrip);
@@ -56,15 +53,26 @@ function bindEvents() {
 async function api(path, options = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
+  const method = (options.method || "GET").toUpperCase();
+  const headers = { Accept: "application/json", ...(options.headers || {}) };
+  if (options.body) headers["Content-Type"] = "application/json";
+  if (!["GET", "HEAD", "OPTIONS"].includes(method) && state.csrf) {
+    headers[state.csrf.headerName] = state.csrf.token;
+  }
   try {
     const response = await fetch(path, {
       ...options,
       signal: options.signal || controller.signal,
-      headers: { "Content-Type": "application/json", ...(options.headers || {}) }
+      headers
     });
     if (!response.ok) {
       let problem = {};
       try { problem = await response.json(); } catch (_) { /* no response body */ }
+      if ([401, 403].includes(response.status) && !path.startsWith("/api/auth/")) {
+        state.csrf = null;
+        try { await refreshCsrf(); } catch (_) { /* the sign-in form will report connectivity errors */ }
+        showAuth("Your session expired. Sign in to keep planning.");
+      }
       throw new Error(problem.message || `Request failed (${response.status})`);
     }
     if (response.status === 204) return null;
@@ -74,6 +82,113 @@ async function api(path, options = {}) {
     throw error;
   } finally {
     clearTimeout(timeout);
+  }
+}
+
+async function bootstrapAuth() {
+  try {
+    await refreshCsrf();
+    const session = await api("/api/auth/me");
+    if (!session.authenticated) {
+      showAuth();
+      return;
+    }
+    state.user = session.user;
+    showApp();
+    await loadTrips();
+    openPendingInvite();
+  } catch (error) {
+    showAuth("Detour could not connect to the server. Please try again.");
+  }
+}
+
+async function refreshCsrf() {
+  state.csrf = await api("/api/auth/csrf");
+}
+
+async function submitAuth(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const fields = Object.fromEntries(new FormData(form));
+  const submit = $("#auth-submit");
+  submit.disabled = true;
+  submit.textContent = state.authMode === "register" ? "Creating account…" : "Signing in…";
+  $("#auth-error").classList.add("hidden");
+  try {
+    const session = await api(`/api/auth/${state.authMode}`, {
+      method: "POST",
+      body: JSON.stringify(fields)
+    });
+    state.user = session.user;
+    form.reset();
+    await refreshCsrf();
+    showApp();
+    await loadTrips();
+    openPendingInvite();
+  } catch (error) {
+    $("#auth-error").textContent = error.message;
+    $("#auth-error").classList.remove("hidden");
+  } finally {
+    submit.disabled = false;
+    submit.textContent = state.authMode === "register" ? "Create account" : "Sign in";
+  }
+}
+
+function toggleAuthMode() {
+  state.authMode = state.authMode === "login" ? "register" : "login";
+  const registering = state.authMode === "register";
+  $("#auth-name-field").classList.toggle("hidden", !registering);
+  $("#auth-name-field input").required = registering;
+  $("#auth-form [name=password]").autocomplete = registering ? "new-password" : "current-password";
+  $("#auth-kicker").textContent = registering ? "LET'S GET GOING" : "WELCOME BACK";
+  $("#auth-title").textContent = registering ? "Create your account" : "Sign in to your trips";
+  $("#auth-intro").textContent = registering
+    ? "One quick account keeps every trip private and in sync."
+    : "Your plans and balances are right where you left them.";
+  $("#auth-submit").textContent = registering ? "Create account" : "Sign in";
+  $("#auth-switch-copy").textContent = registering ? "Already have an account?" : "New to Detour?";
+  $("#auth-toggle").textContent = registering ? "Sign in" : "Create an account";
+  $("#auth-error").classList.add("hidden");
+}
+
+function showAuth(message) {
+  state.user = null;
+  $("#auth-screen").classList.remove("hidden");
+  $(".app-shell").classList.add("hidden");
+  if (message) {
+    $("#auth-error").textContent = message;
+    $("#auth-error").classList.remove("hidden");
+  }
+}
+
+function showApp() {
+  $("#auth-screen").classList.add("hidden");
+  $(".app-shell").classList.remove("hidden");
+  $("#account-name").textContent = state.user.displayName;
+  $("#account-email").textContent = state.user.email;
+  $("#account-avatar").textContent = initials(state.user.displayName);
+  $("#join-account-name").textContent = state.user.displayName;
+}
+
+function openPendingInvite() {
+  const inviteCode = new URLSearchParams(location.search).get("invite");
+  if (!inviteCode || !state.user) return;
+  $("#join-form [name=inviteCode]").value = inviteCode;
+  $("#join-dialog").showModal();
+}
+
+async function logout() {
+  const button = $("#logout-button");
+  button.disabled = true;
+  try {
+    await api("/api/auth/logout", { method: "POST" });
+    Object.assign(state, { trips: [], trip: null, members: [], activities: [], expenses: [], balances: [], settlement: null, activeMemberId: null, user: null, csrf: null });
+    await refreshCsrf();
+    showAuth();
+  } catch (error) {
+    toast(error.message, true);
+  } finally {
+    button.disabled = false;
   }
 }
 
@@ -108,8 +223,7 @@ async function selectTrip(tripId) {
       api(`/api/trips/${tripId}/settlements?strategy=OPTIMAL`)
     ]);
     Object.assign(state, { trip, members, activities, expenses, balances: balancePayload.balances, settlement });
-    const rememberedMember = localStorage.getItem(`detour.member.${tripId}`);
-    state.activeMemberId = members.some(value => value.id === rememberedMember) ? rememberedMember : members[0]?.id || null;
+    state.activeMemberId = members.find(value => value.email === state.user.email)?.id || null;
     localStorage.setItem("detour.trip", tripId);
     renderDashboard();
   } catch (error) {
@@ -125,7 +239,6 @@ function showEmpty() {
   $("#loading-state").classList.add("hidden");
   $("#empty-state").classList.remove("hidden");
   $("#dashboard").classList.add("hidden");
-  $("#viewer-panel").classList.add("hidden");
   $("#trip-select").innerHTML = '<option value="">No trips yet</option>';
   $("#sidebar-members").innerHTML = "";
 }
@@ -164,11 +277,6 @@ function renderMembers() {
       ${avatar(memberValue.displayName, index)}
       <span>${escapeHtml(memberValue.displayName)}${memberValue.role === "ORGANIZER" ? " · host" : ""}</span>
     </div>`).join("");
-  const viewer = $("#active-member");
-  viewer.innerHTML = state.members.map(memberValue =>
-    `<option value="${memberValue.id}">${escapeHtml(memberValue.displayName)}</option>`).join("");
-  viewer.value = state.activeMemberId || "";
-  $("#viewer-panel").classList.toggle("hidden", !state.members.length);
 }
 
 function renderActivities() {
@@ -193,7 +301,7 @@ function renderActivities() {
             <span>${escapeHtml(activityValue.place || activityValue.status.toLowerCase())}</span>
             ${activityValue.reservationReference ? `<span class="reservation">Booked · ${escapeHtml(activityValue.reservationReference)}</span>` : ""}
           </div>
-          <button class="vote-button" data-vote="${activityValue.id}" title="Vote as ${escapeHtml(activeMember()?.displayName || "traveler")}" aria-label="Vote for ${escapeHtml(activityValue.title)} as ${escapeHtml(activeMember()?.displayName || "traveler")}">▲ <span>${activityValue.voteScore}</span></button>
+          <button class="vote-button" data-vote="${activityValue.id}" title="Vote for this plan" aria-label="Vote for ${escapeHtml(activityValue.title)}">▲ <span>${activityValue.voteScore}</span></button>
         </article>`).join("")}
     </div>`).join("");
   $$('[data-vote]', target).forEach(button => button.addEventListener("click", () => vote(button.dataset.vote)));
@@ -324,16 +432,12 @@ async function joinTrip(event) {
   const fields = Object.fromEntries(new FormData(form));
   const code = fields.inviteCode.trim().toUpperCase();
   try {
-    const membership = await api(`/api/trips/join/${encodeURIComponent(code)}`, {
-      method: "POST",
-      body: JSON.stringify({ displayName: fields.displayName, email: fields.email })
-    });
+    await api(`/api/trips/join/${encodeURIComponent(code)}`, { method: "POST" });
     form.closest("dialog").close();
     form.reset();
     history.replaceState({}, "", location.pathname);
     const trips = await api("/api/trips");
     const joinedTrip = trips.find(trip => trip.inviteCode === code);
-    if (joinedTrip) localStorage.setItem(`detour.member.${joinedTrip.id}`, membership.id);
     state.trips = trips;
     renderTripSelect();
     await selectTrip(joinedTrip?.id || trips[0]?.id);
@@ -416,7 +520,7 @@ async function vote(activityId) {
   if (!state.activeMemberId) return;
   try {
     await api(`/api/trips/${state.trip.id}/activities/${activityId}/votes`, {
-      method: "POST", body: JSON.stringify({ memberId: state.activeMemberId, value: 1 })
+      method: "POST", body: JSON.stringify({ value: 1 })
     });
     await selectTrip(state.trip.id);
   } catch (error) { toast(error.message, true); }
@@ -454,9 +558,7 @@ async function createDemo() {
       destination: "Seoul, South Korea",
       startDate: "2026-10-02",
       endDate: "2026-10-06",
-      currency: "USD",
-      organizerName: "Alex",
-      organizerEmail: `alex.${timestamp}@example.com`
+      currency: "USD"
     }) });
     const createdMembers = await api(`/api/trips/${trip.id}/members`);
     const a = createdMembers[0];
@@ -468,10 +570,10 @@ async function createDemo() {
     const people = [a, b, c, d];
 
     await Promise.all([
-      activity(trip.id, a.id, "2026-10-02", "18:30", "FOOD", "Myeongdong night market", "Myeong-dong", "PROPOSED"),
-      activity(trip.id, b.id, "2026-10-03", "10:00", "ACTIVITY", "Bukchon photo walk", "Bukchon Hanok Village", "CONFIRMED", "BK-2841"),
-      activity(trip.id, c.id, "2026-10-03", "19:00", "FOOD", "Dinner at Jaha Son Mandu", "Buam-dong", "CONFIRMED", "DIN-1900"),
-      activity(trip.id, d.id, "2026-10-04", "14:00", "ACTIVITY", "Leeum Museum", "Hannam-dong", "PROPOSED")
+      activity(trip.id, "2026-10-02", "18:30", "FOOD", "Myeongdong night market", "Myeong-dong", "PROPOSED"),
+      activity(trip.id, "2026-10-03", "10:00", "ACTIVITY", "Bukchon photo walk", "Bukchon Hanok Village", "CONFIRMED", "BK-2841"),
+      activity(trip.id, "2026-10-03", "19:00", "FOOD", "Dinner at Jaha Son Mandu", "Buam-dong", "CONFIRMED", "DIN-1900"),
+      activity(trip.id, "2026-10-04", "14:00", "ACTIVITY", "Leeum Museum", "Hannam-dong", "PROPOSED")
     ]);
 
     await api(`/api/trips/${trip.id}/expenses`, { method: "POST", body: JSON.stringify({
@@ -506,9 +608,9 @@ async function createDemo() {
   }
 }
 
-function activity(tripId, proposedByMemberId, date, startTime, type, title, place, status, reservationReference = null) {
+function activity(tripId, date, startTime, type, title, place, status, reservationReference = null) {
   return api(`/api/trips/${tripId}/activities`, { method: "POST", body: JSON.stringify({
-    proposedByMemberId, date, startTime, type, status, title, place, notes: null, reservationReference, bookingUrl: null
+    date, startTime, type, status, title, place, notes: null, reservationReference, bookingUrl: null
   }) });
 }
 
@@ -550,19 +652,6 @@ function seedDateInputs() {
 
 function member(id) {
   return state.members.find(memberValue => memberValue.id === id);
-}
-
-function activeMember() {
-  return member(state.activeMemberId);
-}
-
-function selectMember(memberId) {
-  if (!state.members.some(value => value.id === memberId)) return;
-  state.activeMemberId = memberId;
-  localStorage.setItem(`detour.member.${state.trip.id}`, memberId);
-  renderActivities();
-  renderBalances();
-  toast(`Viewing as ${activeMember().displayName}`);
 }
 
 function showLoading() {

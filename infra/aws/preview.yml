@@ -1,0 +1,87 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Detour HTTPS preview - one cost-capped App Runner instance with ephemeral H2 storage
+
+Parameters:
+  ContainerImage:
+    Type: String
+    Description: Immutable ECR image URI including its tag
+
+Resources:
+  EcrAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: Allows App Runner to pull the Detour preview image from ECR
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: build.apprunner.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSAppRunnerServicePolicyForECRAccess
+      Tags:
+        - Key: Project
+          Value: Detour
+        - Key: Environment
+          Value: preview
+
+  PreviewScaling:
+    Type: AWS::AppRunner::AutoScalingConfiguration
+    Properties:
+      AutoScalingConfigurationName: detour-preview-single-instance
+      MaxConcurrency: 50
+      MaxSize: 1
+      MinSize: 1
+      Tags:
+        - Key: Project
+          Value: Detour
+        - Key: Environment
+          Value: preview
+
+  PreviewService:
+    Type: AWS::AppRunner::Service
+    Properties:
+      ServiceName: detour-preview
+      AutoScalingConfigurationArn: !GetAtt PreviewScaling.AutoScalingConfigurationArn
+      HealthCheckConfiguration:
+        HealthyThreshold: 1
+        Interval: 10
+        Path: /actuator/health/readiness
+        Protocol: HTTP
+        Timeout: 5
+        UnhealthyThreshold: 5
+      InstanceConfiguration:
+        Cpu: 0.25 vCPU
+        Memory: 0.5 GB
+      SourceConfiguration:
+        AuthenticationConfiguration:
+          AccessRoleArn: !GetAtt EcrAccessRole.Arn
+        AutoDeploymentsEnabled: false
+        ImageRepository:
+          ImageIdentifier: !Ref ContainerImage
+          ImageRepositoryType: ECR
+          ImageConfiguration:
+            Port: "8080"
+            RuntimeEnvironmentVariables:
+              - Name: DATABASE_URL
+                Value: jdbc:h2:file:/tmp/detour;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+              - Name: JAVA_TOOL_OPTIONS
+                Value: -XX:MaxRAMPercentage=65.0 -XX:+UseSerialGC -XX:+ExitOnOutOfMemoryError
+              - Name: SERVER_SERVLET_SESSION_COOKIE_SECURE
+                Value: "true"
+      Tags:
+        - Key: Project
+          Value: Detour
+        - Key: Environment
+          Value: preview
+
+Outputs:
+  ServiceArn:
+    Value: !GetAtt PreviewService.ServiceArn
+  ServiceUrl:
+    Description: Public HTTPS URL for the Detour preview
+    Value: !Join ["", ["https://", !GetAtt PreviewService.ServiceUrl]]
+  DataDurability:
+    Description: Preview data is stored on the App Runner instance and is not durable across deployments or replacement
+    Value: ephemeral

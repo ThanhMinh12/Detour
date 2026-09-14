@@ -30,6 +30,8 @@ public class TripMember {
     private String displayName;
     @Column(nullable = false)
     private String email;
+    @Column(name = "user_id")
+    private UUID userId;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
@@ -39,18 +41,32 @@ public class TripMember {
     protected TripMember() {}
 
     public TripMember(Trip trip, String displayName, String email, Role role) {
+        this(trip, displayName, email, role, null);
+    }
+
+    public TripMember(Trip trip, String displayName, String email, Role role, UUID userId) {
         this.trip = trip;
         this.displayName = displayName.trim();
         this.email = email.trim().toLowerCase();
         this.role = role;
+        this.userId = userId;
         this.joinedAt = Instant.now();
+    }
+
+    public void attachUser(UUID userId, String displayName, String email) {
+        if (this.userId != null && !this.userId.equals(userId)) {
+            throw new IllegalStateException("This traveler is already connected to another account");
+        }
+        this.userId = userId;
+        this.displayName = displayName.trim();
+        this.email = email.trim().toLowerCase();
     }
 
     public UUID getId() { return id; }
     public Trip getTrip() { return trip; }
     public String getDisplayName() { return displayName; }
     public String getEmail() { return email; }
+    public UUID getUserId() { return userId; }
     public Role getRole() { return role; }
     public Instant getJoinedAt() { return joinedAt; }
 }
-

@@ -42,7 +42,7 @@ public class Trip {
         this.startDate = startDate;
         this.endDate = endDate;
         this.currency = currency.toUpperCase(Locale.ROOT);
-        this.inviteCode = UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase(Locale.ROOT);
+        this.inviteCode = UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase(Locale.ROOT);
         this.createdAt = Instant.now();
     }
 
@@ -55,4 +55,3 @@ public class Trip {
     public String getInviteCode() { return inviteCode; }
     public Instant getCreatedAt() { return createdAt; }
 }
-

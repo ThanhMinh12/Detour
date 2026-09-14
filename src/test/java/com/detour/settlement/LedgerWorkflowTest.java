@@ -5,15 +5,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.detour.auth.AppUserService;
+import com.detour.auth.TestAccounts;
 import com.detour.expense.Expense;
 import com.detour.expense.ExpenseService;
 import com.detour.expense.SplitCalculator;
 import com.detour.trip.Trip;
 import com.detour.trip.TripMember;
 import com.detour.trip.TripService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
@@ -22,11 +26,16 @@ class LedgerWorkflowTest {
     @Autowired TripService trips;
     @Autowired ExpenseService expenses;
     @Autowired BalanceService balances;
+    @Autowired AppUserService users;
+    @Autowired AuthenticationManager authenticationManager;
+
+    @AfterEach
+    void clearAuthentication() { TestAccounts.clear(); }
 
     @Test
     void derivesNetBalancesFromPayerAndImmutableShares() {
-        Trip trip = trips.create(new Trip("Dinner", "Seoul", LocalDate.now(), LocalDate.now(), "USD"),
-                "A", "a@example.com");
+        TestAccounts.registerAndSignIn(users, authenticationManager, "A", "ledger-a@example.com");
+        Trip trip = trips.create(new Trip("Dinner", "Seoul", LocalDate.now(), LocalDate.now(), "USD"));
         TripMember a = trips.members(trip.getId()).getFirst();
         TripMember b = trips.addMember(trip.getId(), "B", "b@example.com");
         TripMember c = trips.addMember(trip.getId(), "C", "c@example.com");

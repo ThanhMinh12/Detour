@@ -6,12 +6,20 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+    @ExceptionHandler(AuthenticationException.class)
+    ResponseEntity<Problem> authentication(AuthenticationException exception) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new Problem(Instant.now(), 401, "Authentication failed",
+                        "Email or password is incorrect", Map.of()));
+    }
+
     @ExceptionHandler(NotFoundException.class)
     ResponseEntity<Problem> notFound(NotFoundException exception) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -35,4 +43,3 @@ public class ApiExceptionHandler {
 
     record Problem(Instant timestamp, int status, String error, String message, Map<String, String> fields) {}
 }
-

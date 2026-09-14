@@ -10,6 +10,28 @@ docker compose up --build
 
 The app is available at <http://localhost:8080>; health is reported at `/actuator/health`.
 
+## HTTPS preview
+
+For a shareable preview before a domain and production database are ready, deploy the
+immutable container image with `infra/aws/preview.yml`. The stack runs one App Runner
+instance at 0.25 vCPU and 0.5 GB, caps scaling at one instance, and provides an AWS-hosted
+HTTPS URL:
+
+```bash
+aws cloudformation deploy \
+  --region us-east-2 \
+  --stack-name detour-preview \
+  --template-file infra/aws/preview.yml \
+  --capabilities CAPABILITY_IAM \
+  --parameter-overrides \
+    ContainerImage=ACCOUNT_ID.dkr.ecr.us-east-2.amazonaws.com/detour:IMMUTABLE_TAG
+```
+
+The preview uses an H2 database on the App Runner instance. It is appropriate for demos,
+but its accounts and trip data can disappear when the service is redeployed or replaced.
+Use the ECS/RDS deployment below when data durability, backups, and a custom domain are
+required.
+
 ## AWS deployment
 
 The repository includes a complete, cost-conscious AWS baseline:
@@ -67,7 +89,7 @@ Copy the bootstrap stack outputs into repository **Settings → Secrets and vari
 | `AWS_ECR_REPOSITORY` | `EcrRepositoryName` output |
 | `AWS_REGION` | defaults to the existing project region, `us-east-2` |
 | `AWS_STACK_NAME` | optional; defaults to `detour-production` |
-| `AWS_ALLOWED_INGRESS_CIDR` | optional; restrict to your testers' public IP range before authentication lands |
+| `AWS_ALLOWED_INGRESS_CIDR` | optional; restrict to your testers' public IP range during the private beta |
 | `AWS_DESIRED_COUNT` / `AWS_MAXIMUM_COUNT` | optional; defaults to 1 / 2 Fargate tasks |
 | `AWS_DATABASE_INSTANCE_CLASS` | optional; defaults to `db.t4g.micro` |
 | `AWS_DATABASE_MULTI_AZ` | optional; set `true` for production availability |
@@ -89,7 +111,9 @@ The stack creates the HTTPS listener and Route 53 alias, then redirects HTTP to 
 
 ### Production warning
 
-The infrastructure is deployable, but Detour is **not ready for an unrestricted public launch**. Authentication and per-trip authorization remain the launch blocker: today, any visitor who reaches the app can list and mutate all trips. Until that work lands, restrict access upstream (for example with an identity-aware proxy or a tightly scoped load-balancer ingress rule) and use the deployment only with trusted testers.
+The infrastructure is deployable and application-level authentication and trip authorization are implemented. Do not enable a real-user deployment without configuring ACM and a domain: credentials and session cookies must travel over HTTPS. Keep the beta invite-only or ingress-restricted until email verification, password recovery, expiring invite links, and authentication rate limits are implemented. See the [production-readiness checklist](PRODUCTION_READINESS.md) for the remaining public-launch work.
+
+Accounts and sessions live in PostgreSQL, so no Cognito or separate authentication service is required for the private beta. This minimizes fixed complexity and keeps the sign-in experience direct; it also means the application team owns password recovery and abuse prevention before opening registration broadly.
 
 RDS deletion protection is intentionally enabled. Disable it explicitly before deleting the application stack. The database is retained as a final snapshot on deletion or replacement.
 

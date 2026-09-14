@@ -25,7 +25,7 @@ class SecurityHeadersTest {
                         org.hamcrest.Matchers.containsString("frame-ancestors 'none'")));
 
         mvc.perform(get("/api/trips"))
-                .andExpect(status().isOk())
-                .andExpect(header().string("Cache-Control", "no-store"));
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")));
     }
 }

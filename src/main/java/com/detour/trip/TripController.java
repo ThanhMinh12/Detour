@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.UUID;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -31,7 +30,7 @@ public class TripController {
     @ResponseStatus(HttpStatus.CREATED)
     TripResponse create(@Valid @RequestBody CreateTripRequest request) {
         Trip trip = new Trip(request.name(), request.destination(), request.startDate(), request.endDate(), request.currency());
-        return response(service.create(trip, request.organizerName(), request.organizerEmail()));
+        return response(service.create(trip));
     }
 
     @GetMapping
@@ -53,8 +52,8 @@ public class TripController {
 
     @PostMapping("/join/{inviteCode}")
     @ResponseStatus(HttpStatus.CREATED)
-    MemberResponse join(@PathVariable String inviteCode, @Valid @RequestBody AddMemberRequest request) {
-        return response(service.join(inviteCode, request.displayName(), request.email()));
+    MemberResponse join(@PathVariable String inviteCode) {
+        return response(service.join(inviteCode));
     }
 
     private TripResponse response(Trip trip) {
@@ -71,13 +70,11 @@ public class TripController {
             @NotBlank @Size(max = 160) String destination,
             @NotNull LocalDate startDate,
             @NotNull LocalDate endDate,
-            @NotBlank @Pattern(regexp = "[A-Za-z]{3}") String currency,
-            @NotBlank @Size(max = 100) String organizerName,
-            @NotBlank @Email String organizerEmail) {}
+            @NotBlank @Pattern(regexp = "[A-Za-z]{3}") String currency) {}
 
-    record AddMemberRequest(@NotBlank @Size(max = 100) String displayName, @NotBlank @Email String email) {}
+    record AddMemberRequest(@NotBlank @Size(max = 100) String displayName,
+                            @NotBlank @jakarta.validation.constraints.Email String email) {}
     record TripResponse(UUID id, String name, String destination, LocalDate startDate, LocalDate endDate,
                         String currency, String inviteCode, Instant createdAt) {}
     record MemberResponse(UUID id, String displayName, String email, TripMember.Role role, Instant joinedAt) {}
 }
-

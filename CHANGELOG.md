@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Step 9 — Private accounts and trip isolation
+
+- Added streamlined email/password registration, sign-in, sign-out, and a persistent HTTP-only database session.
+- Added CSRF protection and adaptive BCrypt password hashing without exposing credential state to browser JavaScript.
+- Bound trip membership, activity proposals, and votes to the signed-in account; trip lists and reads now hide other users' data.
+- Added invite continuation through authentication and automatic matching of invited email placeholders to the joining account.
+- Replaced the temporary traveler identity selector with a responsive account landing screen and signed-in profile panel.
+- Added authentication workflow and cross-account authorization integration tests, including database-backed session behavior.
+
 ### Step 8 — AWS beta readiness
 
 - Added Flyway-owned schema migrations and switched Hibernate from schema mutation to validation.
@@ -59,4 +68,4 @@
 
 - Added invite-code joining from both copied links and the empty state.
 - Added one-click recording of suggested repayments with immediate balance and settlement refresh.
-- Documented the trusted-access constraint until authentication and authorization land.
+- Documented the trusted-access constraint that applied before authentication and authorization landed.

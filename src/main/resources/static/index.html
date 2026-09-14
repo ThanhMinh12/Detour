@@ -11,7 +11,41 @@
 </head>
 <body>
   <a class="skip-link" href="#overview">Skip to trip overview</a>
-  <div class="app-shell">
+  <section id="auth-screen" class="auth-screen" aria-labelledby="auth-title">
+    <div class="auth-story">
+      <a class="brand" href="/" aria-label="Detour home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 40 40"><path d="M9 30C13 19 20 25 22 14c1-5 4-7 9-7"/><path d="m26 4 5 3-4 5"/><circle cx="9" cy="30" r="3"/></svg>
+        </span>
+        <span>detour</span>
+      </a>
+      <div class="auth-story-copy">
+        <p class="eyebrow">TRAVEL WELL TOGETHER</p>
+        <h1>One place for the plan<br>and <em>every penny.</em></h1>
+        <p>Build the itinerary, split shared costs down to the cent, and settle the group with fewer payments.</p>
+        <div class="auth-proof" aria-label="Detour highlights">
+          <span>Shared itinerary</span><span>Fair expense splits</span><span>Simple settle-up</span>
+        </div>
+      </div>
+    </div>
+    <div class="auth-entry">
+      <form id="auth-form" class="auth-card">
+        <p class="eyebrow" id="auth-kicker">WELCOME BACK</p>
+        <h2 id="auth-title">Sign in to your trips</h2>
+        <p id="auth-intro">Your plans and balances are right where you left them.</p>
+        <div id="auth-name-field" class="hidden">
+          <label>Your name<input name="displayName" maxlength="100" autocomplete="name" placeholder="Alex Morgan"></label>
+        </div>
+        <label>Email<input name="email" type="email" maxlength="320" autocomplete="email" required placeholder="you@example.com"></label>
+        <label>Password<input name="password" type="password" minlength="8" maxlength="72" autocomplete="current-password" required placeholder="At least 8 characters"></label>
+        <p id="auth-error" class="auth-error hidden" role="alert"></p>
+        <button id="auth-submit" class="button primary" type="submit">Sign in</button>
+        <p class="auth-switch"><span id="auth-switch-copy">New to Detour?</span> <button id="auth-toggle" type="button">Create an account</button></p>
+      </form>
+    </div>
+  </section>
+
+  <div class="app-shell hidden">
     <aside class="sidebar">
       <a class="brand" href="/" aria-label="Detour home">
         <span class="brand-mark" aria-hidden="true">
@@ -52,15 +86,15 @@
         <div id="sidebar-members" class="member-stack"></div>
       </div>
 
-      <div id="viewer-panel" class="viewer-panel hidden">
-        <label for="active-member">You’re viewing as</label>
-        <select id="active-member" aria-label="Choose your traveler identity"></select>
-        <small>This temporary selector will be replaced by sign-in.</small>
+      <div id="account-panel" class="account-panel">
+        <span id="account-avatar" class="avatar avatar-0"></span>
+        <div><strong id="account-name"></strong><small id="account-email"></small></div>
+        <button id="logout-button" type="button">Sign out</button>
       </div>
 
       <div class="sidebar-footer">
         <a href="/docs" target="_blank">API docs <span>↗</span></a>
-        <span>Detour MVP · v0.1</span>
+        <span>Detour · private by default</span>
       </div>
     </aside>
     <button id="sidebar-backdrop" class="sidebar-backdrop" aria-label="Close navigation"></button>
@@ -166,9 +200,7 @@
         <label>Start date<input name="startDate" type="date" required></label>
         <label>End date<input name="endDate" type="date" required></label>
         <label>Currency<select name="currency"><option>USD</option><option>KRW</option><option>EUR</option><option>GBP</option><option>JPY</option></select></label>
-        <span></span>
-        <label>Organizer name<input name="organizerName" required placeholder="Alex"></label>
-        <label>Organizer email<input name="organizerEmail" type="email" required placeholder="alex@example.com"></label>
+        <p class="form-note wide">You’ll be added as the trip organizer automatically.</p>
       </div>
       <div class="dialog-actions"><button value="cancel" class="button secondary">Cancel</button><button type="submit" value="default" class="button primary">Create trip</button></div>
     </form>
@@ -189,9 +221,8 @@
     <form id="join-form" method="dialog">
       <div class="dialog-heading"><div><p class="eyebrow">YOU'RE INVITED</p><h2>Join a trip</h2></div><button class="dialog-close" value="cancel" aria-label="Close">×</button></div>
       <div class="form-grid">
-        <label class="wide">Invite code<input name="inviteCode" required minlength="8" maxlength="12" placeholder="A1B2C3D4"></label>
-        <label>Name<input name="displayName" required maxlength="100" placeholder="Jamie"></label>
-        <label>Email<input name="email" type="email" required placeholder="jamie@example.com"></label>
+        <label class="wide">Invite code<input name="inviteCode" required minlength="8" maxlength="12" placeholder="A1B2C3D4E5F6"></label>
+        <p class="form-note wide">You’ll join as <strong id="join-account-name"></strong>. No extra profile form needed.</p>
       </div>
       <div class="dialog-actions"><button value="cancel" class="button secondary">Cancel</button><button type="submit" value="default" class="button primary">Join trip</button></div>
     </form>
@@ -207,7 +238,6 @@
         <label>Date<input name="date" type="date" required></label>
         <label>Time<input name="startTime" type="time"></label>
         <label class="wide">Place<input name="place" maxlength="240" placeholder="Jongno-gu"></label>
-        <label>Proposed by<select name="proposedByMemberId" class="member-select"></select></label>
         <label>Reservation reference<input name="reservationReference" maxlength="160" placeholder="Optional"></label>
         <label class="wide">Notes<textarea name="notes" maxlength="2000" placeholder="Meet by the west gate…"></textarea></label>
       </div>

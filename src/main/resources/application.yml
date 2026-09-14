@@ -15,12 +15,19 @@ spring:
           time_zone: UTC
   flyway:
     baseline-on-migrate: true
+  session:
+    store-type: jdbc
+    jdbc:
+      initialize-schema: never
   jackson:
     default-property-inclusion: non_null
 
 server:
   shutdown: graceful
   forward-headers-strategy: framework
+  servlet:
+    session:
+      timeout: 30d
   error:
     include-message: always
 

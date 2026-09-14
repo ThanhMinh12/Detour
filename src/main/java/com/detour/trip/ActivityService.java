@@ -30,6 +30,7 @@ public class ActivityService {
 
     @Transactional(readOnly = true)
     public Activity get(UUID tripId, UUID activityId) {
+        trips.get(tripId);
         return activities.findByIdAndTripId(activityId, tripId)
                 .orElseThrow(() -> new NotFoundException("Activity " + activityId + " was not found in this trip"));
     }
@@ -49,4 +50,3 @@ public class ActivityService {
     @Transactional(readOnly = true)
     public long score(UUID activityId) { return votes.score(activityId); }
 }
-
