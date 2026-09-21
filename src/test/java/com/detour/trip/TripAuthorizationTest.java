@@ -73,6 +73,57 @@ class TripAuthorizationTest {
                 .andExpect(jsonPath("$.currency").value("USD"));
     }
 
+    @Test
+    void letsAMemberRemoveTheirUpvote() throws Exception {
+        Cookie alice = register("Alice", "vote-alice@example.com");
+        String tripBody = mvc.perform(post("/api/trips")
+                        .cookie(alice).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Voting trip","destination":"Seoul","startDate":"2026-10-02","endDate":"2026-10-05","currency":"USD"}
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        JsonNode trip = json.readTree(tripBody);
+        String activityBody = mvc.perform(post("/api/trips/{tripId}/activities", trip.get("id").asText())
+                        .cookie(alice).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"date":"2026-10-03","type":"ACTIVITY","status":"PROPOSED","title":"Photo walk"}
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.voteScore").value(0))
+                .andExpect(jsonPath("$.currentUserVote").value(0))
+                .andReturn().getResponse().getContentAsString();
+        JsonNode activity = json.readTree(activityBody);
+
+        mvc.perform(post("/api/trips/{tripId}/activities/{activityId}/votes",
+                        trip.get("id").asText(), activity.get("id").asText())
+                        .cookie(alice).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"value\":1}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.score").value(1))
+                .andExpect(jsonPath("$.currentUserVote").value(1));
+        mvc.perform(get("/api/trips/{tripId}/activities", trip.get("id").asText()).cookie(alice))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].voteScore").value(1))
+                .andExpect(jsonPath("$[0].currentUserVote").value(1));
+
+        mvc.perform(post("/api/trips/{tripId}/activities/{activityId}/votes",
+                        trip.get("id").asText(), activity.get("id").asText())
+                        .cookie(alice).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"value\":0}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.score").value(0))
+                .andExpect(jsonPath("$.currentUserVote").value(0));
+        mvc.perform(get("/api/trips/{tripId}/activities", trip.get("id").asText()).cookie(alice))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].voteScore").value(0))
+                .andExpect(jsonPath("$[0].currentUserVote").value(0));
+    }
+
     private Cookie register(String displayName, String email) throws Exception {
         String body = json.createObjectNode()
                 .put("displayName", displayName)

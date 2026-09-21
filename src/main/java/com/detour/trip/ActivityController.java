@@ -35,7 +35,8 @@ public class ActivityController {
 
     @GetMapping
     List<ActivityResponse> list(@PathVariable UUID tripId) {
-        return service.list(tripId).stream().map(this::response).toList();
+        UUID currentMemberId = trips.currentMember(tripId).getId();
+        return service.list(tripId).stream().map(activity -> response(activity, currentMemberId)).toList();
     }
 
     @PostMapping
@@ -45,16 +46,17 @@ public class ActivityController {
         Activity activity = new Activity(trips.get(tripId), proposedByMemberId, request.date(), request.startTime(),
                 request.type(), request.status(), request.title(), request.place(), request.notes(),
                 request.reservationReference(), request.bookingUrl());
-        return response(service.save(activity));
+        return response(service.save(activity), proposedByMemberId);
     }
 
     @PutMapping("/{activityId}")
     ActivityResponse update(@PathVariable UUID tripId, @PathVariable UUID activityId,
                             @Valid @RequestBody ActivityRequest request) {
         Activity activity = service.get(tripId, activityId);
+        UUID currentMemberId = trips.currentMember(tripId).getId();
         activity.update(activity.getProposedByMemberId(), request.date(), request.startTime(), request.type(), request.status(),
                 request.title(), request.place(), request.notes(), request.reservationReference(), request.bookingUrl());
-        return response(service.save(activity));
+        return response(service.save(activity), currentMemberId);
     }
 
     @DeleteMapping("/{activityId}")
@@ -64,13 +66,15 @@ public class ActivityController {
     @PostMapping("/{activityId}/votes")
     VoteResponse vote(@PathVariable UUID tripId, @PathVariable UUID activityId,
                       @Valid @RequestBody VoteRequest request) {
-        return new VoteResponse(service.vote(tripId, activityId, trips.currentMember(tripId).getId(), request.value()));
+        return new VoteResponse(service.vote(tripId, activityId, trips.currentMember(tripId).getId(), request.value()),
+                request.value());
     }
 
-    private ActivityResponse response(Activity activity) {
+    private ActivityResponse response(Activity activity, UUID currentMemberId) {
         return new ActivityResponse(activity.getId(), activity.getProposedByMemberId(), activity.getDate(),
                 activity.getStartTime(), activity.getType(), activity.getStatus(), activity.getTitle(), activity.getPlace(),
-                activity.getNotes(), activity.getReservationReference(), activity.getBookingUrl(), service.score(activity.getId()));
+                activity.getNotes(), activity.getReservationReference(), activity.getBookingUrl(), service.score(activity.getId()),
+                service.voteValue(activity.getId(), currentMemberId));
     }
 
     record ActivityRequest(@NotNull LocalDate date, LocalTime startTime,
@@ -79,8 +83,8 @@ public class ActivityController {
                            @Size(max = 2000) String notes, @Size(max = 160) String reservationReference,
                            @Size(max = 500) String bookingUrl) {}
     record VoteRequest(@Min(-1) @Max(1) int value) {}
-    record VoteResponse(long score) {}
+    record VoteResponse(long score, int currentUserVote) {}
     record ActivityResponse(UUID id, UUID proposedByMemberId, LocalDate date, LocalTime startTime,
                             Activity.Type type, Activity.Status status, String title, String place, String notes,
-                            String reservationReference, String bookingUrl, long voteScore) {}
+                            String reservationReference, String bookingUrl, long voteScore, int currentUserVote) {}
 }

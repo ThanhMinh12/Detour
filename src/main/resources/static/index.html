@@ -208,29 +208,29 @@
 
   <dialog id="member-dialog">
     <form id="member-form" method="dialog">
-      <div class="dialog-heading"><div><p class="eyebrow">GROW THE CREW</p><h2>Add a traveler</h2></div><button class="dialog-close" value="cancel" aria-label="Close">×</button></div>
+      <div class="dialog-heading"><div><p class="eyebrow">GROW THE CREW</p><h2>Add a traveler</h2></div><button class="dialog-close" value="cancel" formnovalidate aria-label="Close">×</button></div>
       <div class="form-grid">
         <label class="wide">Name<input name="displayName" required maxlength="100" placeholder="Jamie"></label>
         <label class="wide">Email<input name="email" type="email" required placeholder="jamie@example.com"></label>
       </div>
-      <div class="dialog-actions"><button value="cancel" class="button secondary">Cancel</button><button type="submit" value="default" class="button primary">Add traveler</button></div>
+      <div class="dialog-actions"><button value="cancel" formnovalidate class="button secondary">Cancel</button><button type="submit" value="default" class="button primary">Add traveler</button></div>
     </form>
   </dialog>
 
   <dialog id="join-dialog">
     <form id="join-form" method="dialog">
-      <div class="dialog-heading"><div><p class="eyebrow">YOU'RE INVITED</p><h2>Join a trip</h2></div><button class="dialog-close" value="cancel" aria-label="Close">×</button></div>
+      <div class="dialog-heading"><div><p class="eyebrow">YOU'RE INVITED</p><h2>Join a trip</h2></div><button class="dialog-close" value="cancel" formnovalidate aria-label="Close">×</button></div>
       <div class="form-grid">
         <label class="wide">Invite code<input name="inviteCode" required minlength="8" maxlength="12" placeholder="A1B2C3D4E5F6"></label>
         <p class="form-note wide">You’ll join as <strong id="join-account-name"></strong>. No extra profile form needed.</p>
       </div>
-      <div class="dialog-actions"><button value="cancel" class="button secondary">Cancel</button><button type="submit" value="default" class="button primary">Join trip</button></div>
+      <div class="dialog-actions"><button value="cancel" formnovalidate class="button secondary">Cancel</button><button type="submit" value="default" class="button primary">Join trip</button></div>
     </form>
   </dialog>
 
   <dialog id="activity-dialog">
     <form id="activity-form" method="dialog">
-      <div class="dialog-heading"><div><p class="eyebrow">ADD TO THE MAP</p><h2>Save a plan</h2></div><button class="dialog-close" value="cancel" aria-label="Close">×</button></div>
+      <div class="dialog-heading"><div><p class="eyebrow">ADD TO THE MAP</p><h2>Save a plan</h2></div><button class="dialog-close" value="cancel" formnovalidate aria-label="Close">×</button></div>
       <div class="form-grid">
         <label class="wide">Name<input name="title" required maxlength="160" placeholder="Gwangjang Market lunch"></label>
         <label>Type<select name="type"><option>ACTIVITY</option><option>FOOD</option><option>LODGING</option><option>TRANSIT</option></select></label>
@@ -241,13 +241,13 @@
         <label>Reservation reference<input name="reservationReference" maxlength="160" placeholder="Optional"></label>
         <label class="wide">Notes<textarea name="notes" maxlength="2000" placeholder="Meet by the west gate…"></textarea></label>
       </div>
-      <div class="dialog-actions"><button value="cancel" class="button secondary">Cancel</button><button type="submit" value="default" class="button primary">Save plan</button></div>
+      <div class="dialog-actions"><button value="cancel" formnovalidate class="button secondary">Cancel</button><button type="submit" value="default" class="button primary">Save plan</button></div>
     </form>
   </dialog>
 
   <dialog id="expense-dialog" class="large-dialog">
     <form id="expense-form" method="dialog">
-      <div class="dialog-heading"><div><p class="eyebrow">FAIR SHARE</p><h2>Add an expense</h2></div><button class="dialog-close" value="cancel" aria-label="Close">×</button></div>
+      <div class="dialog-heading"><div><p class="eyebrow">FAIR SHARE</p><h2>Add an expense</h2></div><button class="dialog-close" value="cancel" formnovalidate aria-label="Close">×</button></div>
       <div class="form-grid">
         <label class="wide">Description<input name="description" required maxlength="180" placeholder="Dinner at Jaha Son Mandu"></label>
         <label>Paid by<select name="paidByMemberId" class="member-select" required></select></label>
@@ -259,7 +259,7 @@
         <label>Tip<input name="tip" type="number" min="0" step="0.01" value="0"></label>
       </div>
       <div id="split-editor" class="split-editor"></div>
-      <div class="dialog-actions"><span id="split-summary" class="split-summary"></span><button value="cancel" class="button secondary">Cancel</button><button type="submit" value="default" class="button primary">Add expense</button></div>
+      <div class="dialog-actions"><span id="split-summary" class="split-summary"></span><button value="cancel" formnovalidate class="button secondary">Cancel</button><button type="submit" value="default" class="button primary">Add expense</button></div>
     </form>
   </dialog>
 

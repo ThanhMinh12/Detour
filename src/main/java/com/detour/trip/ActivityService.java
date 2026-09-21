@@ -49,4 +49,11 @@ public class ActivityService {
 
     @Transactional(readOnly = true)
     public long score(UUID activityId) { return votes.score(activityId); }
+
+    @Transactional(readOnly = true)
+    public int voteValue(UUID activityId, UUID memberId) {
+        return votes.findByActivityIdAndMemberId(activityId, memberId)
+                .map(ActivityVote::getValue)
+                .orElse(0);
+    }
 }

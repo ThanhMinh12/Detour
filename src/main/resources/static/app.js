@@ -292,7 +292,9 @@ function renderActivities() {
   target.innerHTML = Object.entries(days).map(([date, activities]) => `
     <div class="day-group">
       <div class="day-label">${formatDay(date)}</div>
-      ${activities.map(activityValue => `
+      ${activities.map(activityValue => {
+        const upvoted = activityValue.currentUserVote === 1;
+        return `
         <article class="activity-row">
           <span class="activity-time">${formatTime(activityValue.startTime)}</span>
           <span class="activity-icon ${activityValue.type.toLowerCase()}">${icons[activityValue.type]}</span>
@@ -301,10 +303,11 @@ function renderActivities() {
             <span>${escapeHtml(activityValue.place || activityValue.status.toLowerCase())}</span>
             ${activityValue.reservationReference ? `<span class="reservation">Booked · ${escapeHtml(activityValue.reservationReference)}</span>` : ""}
           </div>
-          <button class="vote-button" data-vote="${activityValue.id}" title="Vote for this plan" aria-label="Vote for ${escapeHtml(activityValue.title)}">▲ <span>${activityValue.voteScore}</span></button>
-        </article>`).join("")}
+          <button class="vote-button${upvoted ? " active" : ""}" data-vote="${activityValue.id}" data-vote-value="${activityValue.currentUserVote}" title="${upvoted ? "Remove upvote" : "Upvote this plan"}" aria-label="${upvoted ? "Remove upvote from" : "Upvote"} ${escapeHtml(activityValue.title)}" aria-pressed="${upvoted}">▲ <span>${activityValue.voteScore}</span></button>
+        </article>`;
+      }).join("")}
     </div>`).join("");
-  $$('[data-vote]', target).forEach(button => button.addEventListener("click", () => vote(button.dataset.vote)));
+  $$('[data-vote]', target).forEach(button => button.addEventListener("click", () => vote(button)));
 }
 
 function renderExpenses() {
@@ -516,14 +519,19 @@ async function addExpense(event) {
   } catch (error) { toast(error.message, true); }
 }
 
-async function vote(activityId) {
+async function vote(button) {
   if (!state.activeMemberId) return;
+  button.disabled = true;
   try {
-    await api(`/api/trips/${state.trip.id}/activities/${activityId}/votes`, {
-      method: "POST", body: JSON.stringify({ value: 1 })
+    const value = Number(button.dataset.voteValue) === 1 ? 0 : 1;
+    await api(`/api/trips/${state.trip.id}/activities/${button.dataset.vote}/votes`, {
+      method: "POST", body: JSON.stringify({ value })
     });
     await selectTrip(state.trip.id);
-  } catch (error) { toast(error.message, true); }
+  } catch (error) {
+    button.disabled = false;
+    toast(error.message, true);
+  }
 }
 
 async function recordPayment(button) {

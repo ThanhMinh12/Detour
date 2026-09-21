@@ -189,6 +189,8 @@ h1, h2 { margin: 0; font-family: "Fraunces", Georgia, serif; }
 .activity-copy span, .expense-copy span { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
 .reservation { color: #4d6c60 !important; font-weight: 700; }
 .vote-button { display: grid; min-width: 39px; padding: 5px 7px; color: var(--ink); border: 1px solid var(--line); border-radius: 10px; background: white; font-size: 10px; }
+.vote-button.active { color: white; border-color: var(--orange); background: var(--orange); }
+.vote-button:disabled { cursor: wait; opacity: .65; }
 .balance-list { display: grid; gap: 15px; margin: 24px 0; }
 .balance-row { display: grid; grid-template-columns: 35px 1fr auto; align-items: center; gap: 10px; }
 .balance-row.current { margin: -6px; padding: 6px; border-radius: 12px; background: #f1eee5; }
