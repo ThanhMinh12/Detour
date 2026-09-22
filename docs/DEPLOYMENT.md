@@ -32,6 +32,10 @@ but its accounts and trip data can disappear when the service is redeployed or r
 Use the ECS/RDS deployment below when data durability, backups, and a custom domain are
 required.
 
+The `deploy-preview` GitHub Actions workflow builds and deploys this stack from `main` when
+`AWS_PREVIEW_DEPLOY_ENABLED` is `true`. It reuses the bootstrap role variables documented
+below and defaults `AWS_PREVIEW_STACK_NAME` to `detour-preview`.
+
 ## AWS deployment
 
 The repository includes a complete, cost-conscious AWS baseline:

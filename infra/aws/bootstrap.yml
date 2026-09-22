@@ -16,6 +16,9 @@ Parameters:
   ApplicationStackName:
     Type: String
     Default: detour-production
+  PreviewStackName:
+    Type: String
+    Default: detour-preview
   NotificationEmail:
     Type: String
     Default: ""
@@ -121,6 +124,7 @@ Resources:
                   - ec2:*
                   - elasticloadbalancing:*
                   - ecs:*
+                  - apprunner:*
                   - rds:*
                   - secretsmanager:*
                   - logs:*
@@ -207,7 +211,9 @@ Resources:
                   - cloudformation:GetTemplate
                   - cloudformation:GetTemplateSummary
                   - cloudformation:UpdateStack
-                Resource: !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ApplicationStackName}/*
+                Resource:
+                  - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ApplicationStackName}/*
+                  - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${PreviewStackName}/*
               - Sid: PassCloudFormationRole
                 Effect: Allow
                 Action: iam:PassRole
