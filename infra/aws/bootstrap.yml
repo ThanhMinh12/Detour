@@ -4,7 +4,7 @@ Description: Detour deployment bootstrap - ECR and a GitHub Actions OIDC deploym
 Parameters:
   GitHubSubjectClaim:
     Type: String
-    Description: Exact GitHub OIDC sub claim allowed to deploy (for example repo:owner/repository:ref:refs/heads/main)
+    Description: Exact GitHub OIDC sub claim allowed to deploy (for example repo:owner@owner-id/repository@repository-id:ref:refs/heads/main)
   ExistingGitHubOidcProviderArn:
     Type: String
     Default: ""

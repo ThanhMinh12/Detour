@@ -73,7 +73,7 @@ aws cloudformation deploy \
   --template-file infra/aws/bootstrap.yml \
   --capabilities CAPABILITY_IAM \
   --parameter-overrides \
-    GitHubSubjectClaim='repo:ThanhMinh12/Detour:ref:refs/heads/main' \
+    GitHubSubjectClaim='repo:ThanhMinh12@102886987/Detour@1360627277:ref:refs/heads/main' \
     MonthlyBudgetUsd=50
 ```
 
