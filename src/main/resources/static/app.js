@@ -234,6 +234,17 @@ async function selectTrip(tripId) {
   }
 }
 
+async function refreshLedger(tripId = state.trip?.id) {
+  if (!tripId) return;
+  const [balancePayload, settlement] = await Promise.all([
+    api(`/api/trips/${tripId}/balances`),
+    api(`/api/trips/${tripId}/settlements?strategy=OPTIMAL`)
+  ]);
+  if (state.trip?.id !== tripId) return;
+  Object.assign(state, { balances: balancePayload.balances, settlement });
+  renderBalances();
+}
+
 function showEmpty() {
   state.trip = null;
   $("#loading-state").classList.add("hidden");
@@ -328,6 +339,8 @@ function renderExpenses() {
 }
 
 function renderBalances() {
+  $("#transfer-count").textContent = state.settlement.transfers.length;
+  $("#strategy-label").textContent = state.settlement.fellBackFromOptimal ? "Greedy fallback" : "Optimal";
   $("#balance-list").innerHTML = state.balances.map((balance, index) => {
     const positive = balance.amountCents > 0;
     const settled = balance.amountCents === 0;
@@ -420,10 +433,14 @@ async function addMember(event) {
   event.preventDefault();
   const form = event.currentTarget;
   try {
-    await api(`/api/trips/${state.trip.id}/members`, { method: "POST", body: JSON.stringify(Object.fromEntries(new FormData(form))) });
+    const addedMember = await api(`/api/trips/${state.trip.id}/members`, {
+      method: "POST", body: JSON.stringify(Object.fromEntries(new FormData(form)))
+    });
+    state.members.push(addedMember);
+    state.balances.push({ memberId: addedMember.id, displayName: addedMember.displayName, amountCents: 0 });
     form.closest("dialog").close();
     form.reset();
-    await selectTrip(state.trip.id);
+    renderDashboard();
     toast("Traveler added");
   } catch (error) { toast(error.message, true); }
 }
@@ -456,11 +473,16 @@ async function addActivity(event) {
   if (!data.startTime) data.startTime = null;
   data.bookingUrl = null;
   try {
-    await api(`/api/trips/${state.trip.id}/activities`, { method: "POST", body: JSON.stringify(data) });
+    const activity = await api(`/api/trips/${state.trip.id}/activities`, {
+      method: "POST", body: JSON.stringify(data)
+    });
+    state.activities.push(activity);
+    state.activities.sort((left, right) => left.date.localeCompare(right.date)
+      || (left.startTime || "").localeCompare(right.startTime || ""));
     form.closest("dialog").close();
     form.reset();
     seedDateInputs();
-    await selectTrip(state.trip.id);
+    renderDashboard();
     toast("Plan added to the itinerary");
   } catch (error) { toast(error.message, true); }
 }
@@ -510,34 +532,65 @@ async function addExpense(event) {
       }
     }
     if (!payload.allocations.length && mode !== "ITEMIZED") throw new Error("Choose at least one traveler");
-    await api(`/api/trips/${state.trip.id}/expenses`, { method: "POST", body: JSON.stringify(payload) });
+    const tripId = state.trip.id;
+    const expense = await api(`/api/trips/${tripId}/expenses`, { method: "POST", body: JSON.stringify(payload) });
+    state.expenses.push(expense);
+    state.expenses.sort((left, right) => right.occurredOn.localeCompare(left.occurredOn)
+      || right.createdAt.localeCompare(left.createdAt));
     form.closest("dialog").close();
     form.reset();
     seedDateInputs();
-    await selectTrip(state.trip.id);
+    renderDashboard();
+    try {
+      await refreshLedger(tripId);
+    } catch (_) {
+      toast("Expense saved, but balances could not refresh. Reload to try again.", true);
+      return;
+    }
     toast("Expense split down to the cent");
   } catch (error) { toast(error.message, true); }
 }
 
 async function vote(button) {
   if (!state.activeMemberId) return;
+  const tripId = state.trip.id;
+  const activityId = button.dataset.vote;
+  const previousVote = Number(button.dataset.voteValue);
+  const previousScore = Number(button.querySelector("span").textContent);
+  const value = previousVote === 1 ? 0 : 1;
   button.disabled = true;
+  updateVote(activityId, button, value, previousScore + value - previousVote);
   try {
-    const value = Number(button.dataset.voteValue) === 1 ? 0 : 1;
-    await api(`/api/trips/${state.trip.id}/activities/${button.dataset.vote}/votes`, {
+    const result = await api(`/api/trips/${tripId}/activities/${activityId}/votes`, {
       method: "POST", body: JSON.stringify({ value })
     });
-    await selectTrip(state.trip.id);
+    if (state.trip?.id === tripId) updateVote(activityId, button, result.currentUserVote, result.score);
   } catch (error) {
-    button.disabled = false;
+    if (state.trip?.id === tripId) updateVote(activityId, button, previousVote, previousScore);
     toast(error.message, true);
+  } finally {
+    button.disabled = false;
   }
+}
+
+function updateVote(activityId, button, value, score) {
+  const activity = state.activities.find(candidate => candidate.id === activityId);
+  if (activity) Object.assign(activity, { currentUserVote: value, voteScore: score });
+  if (!button.isConnected) return;
+  const upvoted = value === 1;
+  button.dataset.voteValue = value;
+  button.classList.toggle("active", upvoted);
+  button.setAttribute("aria-pressed", String(upvoted));
+  button.title = upvoted ? "Remove upvote" : "Upvote this plan";
+  button.setAttribute("aria-label", `${upvoted ? "Remove upvote from" : "Upvote"} ${activity?.title || "this plan"}`);
+  button.querySelector("span").textContent = score;
 }
 
 async function recordPayment(button) {
   button.disabled = true;
   try {
-    await api(`/api/trips/${state.trip.id}/reimbursements`, {
+    const tripId = state.trip.id;
+    await api(`/api/trips/${tripId}/reimbursements`, {
       method: "POST",
       body: JSON.stringify({
         fromMemberId: button.dataset.from,
@@ -547,7 +600,7 @@ async function recordPayment(button) {
         paidOn: new Date().toISOString().slice(0, 10)
       })
     });
-    await selectTrip(state.trip.id);
+    await refreshLedger(tripId);
     toast("Payment recorded and balances refreshed");
   } catch (error) {
     button.disabled = false;

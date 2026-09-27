@@ -35,18 +35,17 @@ public class ActivityController {
 
     @GetMapping
     List<ActivityResponse> list(@PathVariable UUID tripId) {
-        UUID currentMemberId = trips.currentMember(tripId).getId();
-        return service.list(tripId).stream().map(activity -> response(activity, currentMemberId)).toList();
+        return service.list(tripId).stream().map(this::response).toList();
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     ActivityResponse create(@PathVariable UUID tripId, @Valid @RequestBody ActivityRequest request) {
-        UUID proposedByMemberId = trips.currentMember(tripId).getId();
-        Activity activity = new Activity(trips.get(tripId), proposedByMemberId, request.date(), request.startTime(),
+        TripMember proposer = trips.currentMember(tripId);
+        Activity activity = new Activity(proposer.getTrip(), proposer.getId(), request.date(), request.startTime(),
                 request.type(), request.status(), request.title(), request.place(), request.notes(),
                 request.reservationReference(), request.bookingUrl());
-        return response(service.save(activity), proposedByMemberId);
+        return response(service.save(activity), 0, 0);
     }
 
     @PutMapping("/{activityId}")
@@ -66,8 +65,18 @@ public class ActivityController {
     @PostMapping("/{activityId}/votes")
     VoteResponse vote(@PathVariable UUID tripId, @PathVariable UUID activityId,
                       @Valid @RequestBody VoteRequest request) {
-        return new VoteResponse(service.vote(tripId, activityId, trips.currentMember(tripId).getId(), request.value()),
-                request.value());
+        return new VoteResponse(service.vote(tripId, activityId, request.value()), request.value());
+    }
+
+    private ActivityResponse response(ActivityService.ActivityWithVotes result) {
+        return response(result.activity(), result.voteScore(), result.currentUserVote());
+    }
+
+    private ActivityResponse response(Activity activity, long voteScore, int currentUserVote) {
+        return new ActivityResponse(activity.getId(), activity.getProposedByMemberId(), activity.getDate(),
+                activity.getStartTime(), activity.getType(), activity.getStatus(), activity.getTitle(), activity.getPlace(),
+                activity.getNotes(), activity.getReservationReference(), activity.getBookingUrl(), voteScore,
+                currentUserVote);
     }
 
     private ActivityResponse response(Activity activity, UUID currentMemberId) {
