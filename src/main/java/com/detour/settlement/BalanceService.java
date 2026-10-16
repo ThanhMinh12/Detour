@@ -51,7 +51,7 @@ public class BalanceService {
 
     public Reimbursement reimburse(UUID tripId, UUID fromMemberId, UUID toMemberId, long amountCents,
                                    String note, LocalDate paidOn) {
-        Trip trip = trips.get(tripId);
+        Trip trip = trips.lockLedger(tripId);
         trips.member(tripId, fromMemberId);
         trips.member(tripId, toMemberId);
         Map<UUID, Long> current = new LinkedHashMap<>();

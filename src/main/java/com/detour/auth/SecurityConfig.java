@@ -52,7 +52,7 @@ public class SecurityConfig {
                 .securityContext(context -> context.securityContextRepository(contexts))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(requests -> requests
-                        .requestMatchers("/", "/index.html", "/styles.css", "/app.js", "/favicon.svg",
+                        .requestMatchers("/", "/index.html", "/styles.css", "/assets/**", "/favicon.svg",
                                 "/api/auth/**", "/actuator/health", "/actuator/health/**", "/error")
                         .permitAll()
                         .anyRequest().authenticated())

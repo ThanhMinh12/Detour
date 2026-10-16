@@ -41,6 +41,7 @@ public class Activity {
     @Column(length = 2000)
     private String notes;
     private String reservationReference;
+    @Column(length = 500)
     private String bookingUrl;
 
     protected Activity() {}
@@ -54,6 +55,15 @@ public class Activity {
 
     public void update(UUID proposedByMemberId, LocalDate date, LocalTime startTime, Type type, Status status,
                        String title, String place, String notes, String reservationReference, String bookingUrl) {
+        if (bookingUrl != null && !bookingUrl.isBlank()) {
+            java.net.URI uri;
+            try { uri = java.net.URI.create(bookingUrl); }
+            catch (IllegalArgumentException exception) { throw new IllegalArgumentException("Booking URL must be a valid HTTP(S) URL"); }
+            if (!("https".equalsIgnoreCase(uri.getScheme()) || "http".equalsIgnoreCase(uri.getScheme()))
+                    || uri.getHost() == null || uri.getUserInfo() != null) {
+                throw new IllegalArgumentException("Booking URL must be a valid HTTP(S) URL without embedded credentials");
+            }
+        }
         this.proposedByMemberId = proposedByMemberId;
         this.date = date;
         this.startTime = startTime;

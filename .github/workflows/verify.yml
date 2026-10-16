@@ -21,3 +21,58 @@ jobs:
       - name: Compile, test, and package
         run: mvn --batch-mode --no-transfer-progress verify
 
+  postgres-and-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: detour_ci
+          POSTGRES_USER: detour
+          POSTGRES_PASSWORD: detour-ci-only
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U detour -d detour_ci"
+          --health-interval 5s --health-timeout 3s --health-retries 15
+    env:
+      DATABASE_URL: jdbc:postgresql://127.0.0.1:5432/detour_ci
+      DATABASE_USERNAME: detour
+      DATABASE_PASSWORD: detour-ci-only
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: PostgreSQL integration suite
+        run: >-
+          mvn --batch-mode --no-transfer-progress verify
+          -Dspring.datasource.url="$DATABASE_URL"
+          -Dspring.datasource.username="$DATABASE_USERNAME"
+          -Dspring.datasource.password="$DATABASE_PASSWORD"
+          -Ddebug=false -Dlogging.level.root=WARN
+      - run: pip install httpx==0.28.1 playwright==1.55.0
+      - run: playwright install --with-deps chromium
+      - name: React browser workflows
+        run: |
+          java -jar target/detour-0.1.0-SNAPSHOT.jar --server.port=4320 --debug=false --logging.level.root=WARN > /tmp/detour-qa.log 2>&1 &
+          app_pid=$!
+          trap 'kill "$app_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:4320/actuator/health >/dev/null; then break; fi
+            sleep 1
+          done
+          python scripts/smoke_browser.py
+      - name: Session and trip persistence after application restart
+        run: python scripts/check_persistence.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: detour-browser-verification
+          path: /tmp/projects-ready-evidence/
+

@@ -31,6 +31,11 @@ public class TripService {
         return saved;
     }
 
+    public Trip lockLedger(UUID id) {
+        get(id);
+        return trips.lockLedger(id).orElseThrow(() -> new NotFoundException("Trip not found"));
+    }
+
     @Transactional(readOnly = true)
     public List<Trip> list() {
         return members.findTripsForUser(currentUser.required().id()).stream().map(TripMember::getTrip).toList();

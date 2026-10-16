@@ -26,7 +26,7 @@ public class ExpenseService {
                           SplitCalculator.Mode mode, LocalDate occurredOn, long subtotalCents, long taxCents,
                           long tipCents, List<SplitCalculator.Allocation> allocations,
                           List<SplitCalculator.LineItem> items) {
-        Trip trip = trips.get(tripId);
+        Trip trip = trips.lockLedger(tripId);
         trips.member(tripId, paidByMemberId);
         List<SplitCalculator.Share> shares = calculator.calculate(mode, subtotalCents, taxCents, tipCents,
                 allocations, items);

@@ -6,4 +6,6 @@ target/
 data/
 *.log
 .env
+web/node_modules/
+web/*.tsbuildinfo
 

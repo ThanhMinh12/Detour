@@ -1,6 +1,6 @@
 # Detour
 
-Detour is a collaborative trip planner with fair, auditable group expense splitting. It keeps one net balance per traveler and turns the final balances into a small set of repayments.
+Detour is a Java/Spring Boot + React/TypeScript trip planner with PostgreSQL persistence and auditable group expense splitting. It keeps one net balance per traveler and turns the final balances into a small set of repayments.
 
 ## MVP capabilities
 
@@ -23,7 +23,7 @@ The closest match to production uses Docker and PostgreSQL:
 docker compose up --build
 ```
 
-For the lighter embedded-database option, use Java 21 and Maven 3.9+:
+For the lighter embedded-database option, use Java 21 and Maven 3.9+. Maven installs a project-local Node 22 runtime, tests/builds the React client, and packages it into the same Spring Boot application:
 
 ```bash
 mvn spring-boot:run
@@ -46,5 +46,25 @@ mvn verify
 ```
 
 Container users can run `docker compose up --build` for the app plus PostgreSQL.
+
+For frontend development, run `npm ci && npm run dev` in `web/` with Node 22.12+
+while Spring Boot is listening on port 8080. Vite proxies the authenticated API.
+
+Optional real browser and PostgreSQL restart checks are in
+`scripts/smoke_browser.py` and `scripts/check_persistence.py`. They intentionally
+require a disposable local database. The latter verifies that both trip data
+and the signed-in session survive restarting the application.
+
+Financial writes take a per-trip database lock so concurrent reimbursements
+cannot both spend the same debt. Single-instance authentication, join, and write
+rate limits bound simple abuse. These are portfolio/private-beta safeguards,
+not a substitute for managed identity, recovery, monitoring, and an edge limiter
+for a customer-facing service.
+
+The existing AWS URL remains a disposable H2 preview until a durable database is
+available. Local PostgreSQL passing tests does not make that live preview durable.
+
+See the [three-project release report](docs/PROJECT_RELEASE_STATUS.md) for current
+verification results, hosting constraints, and publication gates.
 
 See [Architecture](docs/ARCHITECTURE.md), [API examples](docs/API.md), the [settlement algorithm](docs/SETTLEMENT.md), [deployment](docs/DEPLOYMENT.md), [production readiness](docs/PRODUCTION_READINESS.md), and the [roadmap](docs/ROADMAP.md).

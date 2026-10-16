@@ -4,4 +4,8 @@
 data
 target
 *.log
+web/node_modules
+web/*.tsbuildinfo
+.env
+.env.*
 
