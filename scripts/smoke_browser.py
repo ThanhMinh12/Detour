@@ -1,23 +1,39 @@
-"""Real React UI smoke test. Run only against an isolated local database."""
+"""Real React UI smoke test for isolated local data or the explicitly approved preview."""
 import argparse
 import json
+import time
 import uuid
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from playwright.sync_api import expect, sync_playwright
+from playwright.sync_api import Error as PlaywrightError, expect, sync_playwright
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--url', default='http://127.0.0.1:4320')
+    parser.add_argument('--allow-disposable-preview', action='store_true',
+                        help='Create synthetic QA data in the known, temporary AWS preview')
+    parser.add_argument('--evidence-dir', type=Path, default=Path('/tmp/projects-ready-evidence'))
     args = parser.parse_args()
-    assert urlsplit(args.url).hostname in {'127.0.0.1','localhost'}, 'Use an isolated local server, not live user data'
-    report = {}
+    local = urlsplit(args.url).hostname in {'127.0.0.1','localhost'}
+    preview = args.allow_disposable_preview and args.url.rstrip('/') == 'https://mkmuk8wzzz.us-east-2.awsapprunner.com'
+    assert local or preview, 'Use isolated local data or explicitly allow the known disposable preview'
+    report = {'target': 'disposable_aws_preview' if preview else 'local'}
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch()
         context = browser.new_context(viewport={'width':1440,'height':1000}, base_url=args.url)
         page = context.new_page()
+        deadline = time.monotonic() + 90
+        while True:
+            try:
+                if context.request.get('/actuator/health', timeout=2000).status == 200:
+                    break
+            except PlaywrightError:
+                pass
+            if time.monotonic() >= deadline:
+                raise TimeoutError('Detour did not become healthy within 90 seconds')
+            time.sleep(.5)
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(args.url)
@@ -82,8 +98,8 @@ def main():
         expect(page.locator('#dashboard')).to_be_visible()
         assert page.locator('#trip-select').input_value() == trip_id
         report['logout_login_restores_trip'] = 'passed'
-        artifact = Path('/tmp/projects-ready-evidence')
-        artifact.mkdir(exist_ok=True)
+        artifact = args.evidence_dir
+        artifact.mkdir(parents=True, exist_ok=True)
         for width in [1440,980,901,768,390,320]:
             page.set_viewport_size({'width':width,'height':1000})
             assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'), width
