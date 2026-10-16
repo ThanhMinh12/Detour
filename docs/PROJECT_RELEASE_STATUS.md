@@ -1,14 +1,15 @@
-# Project release status — October 17, 2026
+# Project release status — October 16, 2026
 
-The three résumé projects have working, locally verified implementations. They
-are **not all publicly deployed**, and local tests are not a certification for
-unrestricted public production traffic.
+The three résumé projects have working, verified implementations. Detour's
+updated AWS preview is live; Fretwork and SceneSeek have public source and
+working local/container releases but are **not publicly hosted**. These checks
+are not a certification for unrestricted public production traffic.
 
 | Project | Implemented and verified | Remaining release gate |
 | --- | --- | --- |
-| Detour | Real React/strict TypeScript client; Spring Boot APIs; all four expense split modes; reservations, voting, settlements and repayment; PostgreSQL migrations and restart persistence. | Approval to reset/redeploy the disposable AWS preview; durable PostgreSQL before relying on hosted data. |
-| Fretwork | Real two-model audio inference, consensus, chord labels, MusicXML/TAB exports, private asynchronous jobs, and engraved sheet-music previews in React. | Repository visibility approval and suitable existing AWS compute/persistent storage. |
-| SceneSeek | Real CLIP text/image retrieval, native C++ similarity search, variable-speed clip matching, private libraries, and browser-compatible video playback. | Repository visibility approval and suitable existing AWS compute/persistent storage. |
+| Detour | Real React/strict TypeScript client; Spring Boot APIs; all four expense split modes; reservations, voting, settlements and repayment; PostgreSQL migrations and restart persistence. Updated AWS preview deployed and browser-verified. | Durable PostgreSQL before relying on hosted data. |
+| Fretwork | Real two-model audio inference, consensus, chord labels, MusicXML/TAB exports, private asynchronous jobs, and engraved sheet-music previews in React. | Suitable existing AWS compute/persistent storage for hosting. |
+| SceneSeek | Real CLIP text/image retrieval, native C++ similarity search, variable-speed clip matching, private libraries, and browser-compatible video playback. | Suitable existing AWS compute/persistent storage for hosting. |
 
 ## Verification evidence
 
@@ -21,6 +22,9 @@ unrestricted public production traffic.
   PostgreSQL trip and the authenticated HTTP session. Maven release packaging
   succeeds. The old imperative client was replaced; its source remains
   recoverable from Git history.
+  The same functional browser checks pass against the approved, disposable
+  [AWS preview](https://mkmuk8wzzz.us-east-2.awsapprunner.com), including all six
+  responsive widths. The test creates only its own synthetic account/trip.
 - **Fretwork:** 41 core tests and five API tests pass without skips. Installation
   from the frozen runtime succeeds in a fresh Python 3.11 environment; the
   supported checker documents two Basic Pitch upstream metadata exceptions
@@ -59,20 +63,34 @@ have been created, and no instance sizing has been changed. The existing Detour
 App Runner preview in `us-east-2` has 0.25 vCPU / 512 MB RAM and ephemeral H2
 storage. Real ML workers used over 1 GB during verification. That preview cannot
 host these model services unchanged or provide durable PostgreSQL/media
-storage. The existing preview remains unchanged pending approval to reset its
-temporary data.
+storage. The user approved resetting the temporary preview data; redeployment
+completed successfully without resizing the service or provisioning a database.
+The old preview data was not retained. Application image commit:
+`b565e53137862f4de8158db7dafdba3834b80780`.
 
 A read-only scan of all 17 enabled regions found no EC2 instances, RDS
 instances or ECS clusters. App Runner enumeration reported only the existing
 preview; six regional App Runner checks failed, so this is not represented as
 an exhaustive inventory of every AWS service or region endpoint.
 
-All three have container configurations and CI build/test workflows. Docker
-Desktop integration is unavailable in this WSL environment, so **full container
-builds are not yet verified**. Native builds and runtime tests do not replace
-that release gate. No remote CI run is claimed for these unpublished changes.
+All three have passing CI build/test workflows, including Detour's
+PostgreSQL/browser/restart checks and SceneSeek's C++ tests. Full container
+builds pass. Fretwork and SceneSeek additionally start the images as non-root
+users and verify API/frontend availability and private session-secret file
+permissions. Real model inference is separately verified by the native media
+regressions; container health checks are not inference benchmarks. Docker
+Desktop integration is still unavailable locally.
 
-Fretwork and SceneSeek publication awaits the user's public/private repository
-choice. Detour changes are kept local because a push may automatically redeploy
-and erase the preview's temporary data. The portfolio has not been updated to
-advertise unverified live demos.
+Release evidence:
+
+- [Detour application verification](https://github.com/ThanhMinh12/Detour/actions/runs/38979441246)
+  and [successful existing-preview deployment](https://github.com/ThanhMinh12/Detour/actions/runs/38979441324).
+- [Fretwork tests, web build, image build and non-root startup](https://github.com/ThanhMinh12/Fretwork/actions/runs/38979949440).
+- [SceneSeek native/API tests, web build, image build and non-root startup](https://github.com/ThanhMinh12/SceneSeek/actions/runs/38979950518).
+
+Public source is available for
+[Fretwork](https://github.com/ThanhMinh12/Fretwork) and
+[SceneSeek](https://github.com/ThanhMinh12/SceneSeek). The updated
+[portfolio](https://thanhminh12.github.io/) links to both, labels them verified
+locally, and does not advertise nonexistent hosted demos. Its GitHub Pages
+deployment and responsive checks pass.
