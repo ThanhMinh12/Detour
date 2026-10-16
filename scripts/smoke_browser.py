@@ -84,10 +84,16 @@ def main():
         report['logout_login_restores_trip'] = 'passed'
         artifact = Path('/tmp/projects-ready-evidence')
         artifact.mkdir(exist_ok=True)
-        for width in [1440,768,390,320]:
+        for width in [1440,980,901,768,390,320]:
             page.set_viewport_size({'width':width,'height':1000})
             assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'), width
+            sidebar = page.locator('.sidebar').bounding_box()
+            assert sidebar and sidebar['x'] >= 0 and sidebar['x'] + sidebar['width'] <= width, 'Navigation is off screen'
+            page.locator('.sidebar .react-actions').get_by_role('button', name='Add traveler', exact=True).click()
+            expect(page.get_by_role('dialog')).to_be_visible()
+            page.get_by_role('button', name='Close dialog', exact=True).click()
             page.screenshot(path=str(artifact / f'detour-{width}.png'), full_page=True)
+        report['responsive_navigation_and_layout'] = 'passed'
         assert not errors, errors
         browser.close()
     print(json.dumps(report, indent=2))

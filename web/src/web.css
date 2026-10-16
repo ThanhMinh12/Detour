@@ -29,5 +29,5 @@
 .react-shell main {min-width:0}
 .react-shell .dashboard {display:block}
 .react-status {color:#52685c;font-size:13px}
-@media(max-width:900px){.react-shell .sidebar{position:relative;width:100%;height:auto;min-height:0;padding:20px;display:block}.react-shell{display:block}.react-shell main{margin-left:0;padding:24px 20px}.react-shell .nav-list{display:flex;flex-wrap:wrap}.react-shell .people-panel{display:none}.react-shell .account-panel{margin-top:20px}.react-panel{padding:20px}.activity-time{width:auto}.activity-row .react-actions{width:100%}}
+@media(max-width:980px){.react-shell .sidebar{position:relative;width:100%;height:auto;min-height:0;padding:20px;display:block;transform:none;box-shadow:none}.react-shell{display:block}.react-shell main{margin-left:0;padding:24px 20px}.react-shell .nav-list{display:flex;flex-wrap:wrap}.react-shell .people-panel{display:none}.react-shell .account-panel{margin-top:20px}.react-panel{padding:20px}.activity-time{width:auto}.activity-row .react-actions{width:100%}}
 @media(max-width:640px){.react-panel .activity-row{grid-template-columns:85px minmax(0,1fr);gap:12px}.react-panel .activity-row .react-actions{grid-column:2;grid-row:2;justify-content:flex-start}}

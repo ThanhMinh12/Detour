@@ -16,7 +16,8 @@ unrestricted public production traffic.
   frontend tests pass. The backend suite includes concurrent repayment
   serialization. Real Chromium workflows cover all four split modes,
   reservation creation/editing/voting, repayment, logout/login restoration and
-  320–1440 px layouts. A separate process-restart check preserves both the
+  navigation/dialog access at six widths from 320–1440 px. A conflicting legacy
+  mobile-sidebar transform was removed. A separate process-restart check preserves both the
   PostgreSQL trip and the authenticated HTTP session. Maven release packaging
   succeeds. The old imperative client was replaced; its source remains
   recoverable from Git history.
@@ -27,7 +28,8 @@ unrestricted public production traffic.
   nonempty notation, TAB, chord and report artifacts using both actual models;
   Flat/slash chords use the notation library's spelling; unsupported extensions
   remain visible text annotations instead of being silently dropped. Chromium
-  renders the resulting MusicXML score. Another browser session
+  renders the resulting MusicXML score, with all 29 predicted chord labels
+  preserved in the final real-audio replay. Another browser session
   cannot read the recording or job. Model Git revisions and the guitar
   checkpoint SHA-256 are pinned and checked.
 - **SceneSeek:** 26 Python tests pass across native and NumPy paths; native
