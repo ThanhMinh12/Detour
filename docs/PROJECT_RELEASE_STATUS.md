@@ -1,15 +1,17 @@
 # Project release status — October 16, 2026
 
 The three résumé projects have working, verified implementations. Detour's
-updated AWS preview is live; Fretwork and SceneSeek have public source and
-working local/container releases but are **not publicly hosted**. These checks
-are not a certification for unrestricted public production traffic.
+updated AWS preview is live. Fretwork and SceneSeek now also have separate
+**live, real-model Gradio demos on free Hugging Face ZeroGPU**. Their original
+React/FastAPI applications remain available as working local/container releases,
+not fully hosted stacks. These checks are not a certification for unrestricted
+public production traffic.
 
 | Project | Implemented and verified | Remaining release gate |
 | --- | --- | --- |
 | Detour | Real React/strict TypeScript client; Spring Boot APIs; all four expense split modes; reservations, voting, settlements and repayment; PostgreSQL migrations and restart persistence. Updated AWS preview deployed and browser-verified. | Durable PostgreSQL before relying on hosted data. |
-| Fretwork | Real two-model audio inference, consensus, chord labels, MusicXML/TAB exports, private asynchronous jobs, and engraved sheet-music previews in React. | Suitable existing AWS compute/persistent storage for hosting. |
-| SceneSeek | Real CLIP text/image retrieval, native C++ similarity search, variable-speed clip matching, private libraries, and browser-compatible video playback. | Suitable existing AWS compute/persistent storage for hosting. |
+| Fretwork | Real two-model audio inference, consensus, chord labels, MusicXML/TAB exports, private asynchronous jobs, and engraved sheet-music previews in React. Separate free Gradio demo deployed and real-inference verified. | Full React/API hosting with durable storage; public demo has temporary files and GPU quotas. |
+| SceneSeek | Real CLIP text/image retrieval, native C++ similarity search, variable-speed clip matching, private libraries, and browser-compatible video playback. Separate free Gradio demo deployed and real-inference verified. | Full React/API hosting with durable storage; public demo has temporary libraries and GPU quotas. |
 
 ## Verification evidence
 
@@ -58,8 +60,9 @@ reports are in each project's `docs/RELEASE-READINESS.md` (and Detour's
 
 ## Hosting and publication
 
-The user's constraint is **existing AWS resources only**. No new AWS resources
-have been created, and no instance sizing has been changed. The existing Detour
+The user's initial constraint was **existing AWS resources only**; they later
+authorized **free non-AWS hosting**. No new AWS resources have been created,
+and no instance sizing has been changed. The existing Detour
 App Runner preview in `us-east-2` has 0.25 vCPU / 512 MB RAM and ephemeral H2
 storage. Real ML workers used over 1 GB during verification. That preview cannot
 host these model services unchanged or provide durable PostgreSQL/media
@@ -67,6 +70,28 @@ storage. The user approved resetting the temporary preview data; redeployment
 completed successfully without resizing the service or provisioning a database.
 The old preview data was not retained. Application image commit:
 `b565e53137862f4de8158db7dafdba3834b80780`.
+
+After secure Hugging Face sign-in as `ThanhMinh12`, two new public Spaces
+were created on explicitly selected free `zero-a10g` hardware. Both report
+`RUNNING` with requested and actual `zero-a10g`; no paid plan, hardware or
+credits were enabled. Existing unrelated Spaces were left untouched.
+
+- [Fretwork demo](https://huggingface.co/spaces/ThanhMinh12/Fretwork): actual
+  GAPS + Basic Pitch, 30-second recording, **99 notes / 29 chord labels**, two
+  engraved score pages, and five artifact downloads passed. Seven additional
+  hosted-adapter tests cover limits, isolated workspaces and engraving.
+- [SceneSeek demo](https://huggingface.co/spaces/ThanhMinh12/SceneSeek): actual
+  CLIP + C++, 30-second indexing, text retrieval, image retrieval at **12 s**,
+  double-speed reference matched at **10–18.08 s / 2×**, and foreign-session
+  library isolation passed. Five hosted-adapter tests and four Transformers
+  4/5 compatibility regressions supplement the original 26 tests.
+
+These are separate Gradio demo profiles, preserving the original React/API
+apps and CPU locks. They have short upload limits, bounded queues, temporary
+workspaces, hour-long cache retention, and visitor GPU quotas/queues. Their
+file URLs are shareable capability links, not the full-stack apps' private
+artifact routes. Only non-sensitive recordings/videos should be uploaded.
+Full React/API deployments with durable storage remain a separate release gate.
 
 A read-only scan of all 17 enabled regions found no EC2 instances, RDS
 instances or ECS clusters. App Runner enumeration reported only the existing
@@ -91,6 +116,6 @@ Release evidence:
 Public source is available for
 [Fretwork](https://github.com/ThanhMinh12/Fretwork) and
 [SceneSeek](https://github.com/ThanhMinh12/SceneSeek). The updated
-[portfolio](https://thanhminh12.github.io/) links to both, labels them verified
-locally, and does not advertise nonexistent hosted demos. Its GitHub Pages
+[portfolio](https://thanhminh12.github.io/) links to both real hosted demos and
+their source, and identifies the demos as Gradio with temporary files. Its GitHub Pages
 deployment and responsive checks pass.
