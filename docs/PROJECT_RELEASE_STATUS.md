@@ -1,17 +1,17 @@
-# Project release status — October 16, 2026
+# Project release status — October 17, 2026
 
 The three résumé projects have working, verified implementations. Detour's
-updated AWS preview is live. Fretwork and SceneSeek now also have separate
-**live, real-model Gradio demos on free Hugging Face ZeroGPU**. Their original
-React/FastAPI applications remain available as working local/container releases,
-not fully hosted stacks. These checks are not a certification for unrestricted
+updated AWS preview is live. Fretwork and SceneSeek now run their **actual
+React/TypeScript interfaces and private FastAPI routes on free Hugging Face
+ZeroGPU**, using Gradio Server mode only for queued inference transport.
+CPU/container releases remain supported. These checks are not a certification for unrestricted
 public production traffic.
 
 | Project | Implemented and verified | Remaining release gate |
 | --- | --- | --- |
 | Detour | Real React/strict TypeScript client; Spring Boot APIs; all four expense split modes; reservations, voting, settlements and repayment; PostgreSQL migrations and restart persistence. Updated AWS preview deployed and browser-verified. | Durable PostgreSQL before relying on hosted data. |
-| Fretwork | Real two-model audio inference, consensus, chord labels, MusicXML/TAB exports, private asynchronous jobs, and engraved sheet-music previews in React. Separate free Gradio demo deployed and real-inference verified. | Full React/API hosting with durable storage; public demo has temporary files and GPU quotas. |
-| SceneSeek | Real CLIP text/image retrieval, native C++ similarity search, variable-speed clip matching, private libraries, and browser-compatible video playback. Separate free Gradio demo deployed and real-inference verified. | Full React/API hosting with durable storage; public demo has temporary libraries and GPU quotas. |
+| Fretwork | Real two-model inference, consensus, chord labels, MusicXML/TAB exports, private asynchronous jobs and React score previews. Actual React/FastAPI stack hosted and real-inference verified. | Durable production storage/account identity; demo has temporary files and GPU quotas. |
+| SceneSeek | Real CLIP text/image retrieval, native C++ search, variable-speed matching, private libraries and playable video. Actual React/FastAPI stack hosted and real-inference verified. | Durable production storage/account identity; demo has temporary libraries and GPU quotas. |
 
 ## Verification evidence
 
@@ -86,12 +86,29 @@ credits were enabled. Existing unrelated Spaces were left untouched.
   library isolation passed. Five hosted-adapter tests and four Transformers
   4/5 compatibility regressions supplement the original 26 tests.
 
-These are separate Gradio demo profiles, preserving the original React/API
-apps and CPU locks. They have short upload limits, bounded queues, temporary
-workspaces, hour-long cache retention, and visitor GPU quotas/queues. Their
-file URLs are shareable capability links, not the full-stack apps' private
-artifact routes. Only non-sensitive recordings/videos should be uploaded.
-Full React/API deployments with durable storage remain a separate release gate.
+The former Gradio widget interfaces have now been replaced by the real
+React/TypeScript applications and private FastAPI routes. Gradio Server mode
+provides only the queued inference transport; browser calls use `@gradio/client`
+and short-lived, single-use dispatch capabilities to retain visitor quota handling.
+Artifact/media downloads remain behind the signed-session REST API. Secure
+partitioned cookies support the official HF iframe; generic Gradio file routes
+and public run history are disabled. The CPU locks are unchanged.
+
+Real hosted React workflows passed: Fretwork's ensemble, 99 notes / 29 labels,
+OpenSheetMusicDisplay engraving, owned downloads and deletion; SceneSeek's
+indexing, text/image/2× clip search, video playback, owned media and deletion.
+Both passed four responsive widths (320–1440 px). Combined local tests now total
+59 for Fretwork and 40 for SceneSeek, plus native C++ verification. Hosted GPU
+QA used the authorized free account after the anonymous test client reached
+the provider's run limit. This does not remove visitor quota limits.
+
+Finished/failed media is deleted after one hour (checked every five minutes)
+or lost on restart. Only non-sensitive media should be uploaded. Account-based
+identity and durable production storage remain separate release gates.
+
+The public GitHub profile README is published at
+[ThanhMinh12/ThanhMinh12](https://github.com/ThanhMinh12/ThanhMinh12), with a concise
+introduction, primary skills, portfolio, and source/demo links for all projects.
 
 A read-only scan of all 17 enabled regions found no EC2 instances, RDS
 instances or ECS clusters. App Runner enumeration reported only the existing
@@ -117,5 +134,5 @@ Public source is available for
 [Fretwork](https://github.com/ThanhMinh12/Fretwork) and
 [SceneSeek](https://github.com/ThanhMinh12/SceneSeek). The updated
 [portfolio](https://thanhminh12.github.io/) links to both real hosted demos and
-their source, and identifies the demos as Gradio with temporary files. Its GitHub Pages
+their source, and identifies the actual React/FastAPI deployments with temporary files. Its GitHub Pages
 deployment and responsive checks pass.
