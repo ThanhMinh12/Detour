@@ -37,6 +37,14 @@ def main():
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(args.url)
+        expect(page.get_by_role('heading', level=1)).to_have_text('Trip planning')
+        expect(page).to_have_title('Detour — Trip planning')
+        assert page.locator('body').evaluate('(node) => getComputedStyle(node).backgroundColor') == 'rgb(255, 255, 255)'
+        assert 'every penny' not in page.locator('body').inner_text().lower()
+        assert page.evaluate('''async () => {
+            await document.fonts.load('400 16px "Source Sans 3"');
+            return [...document.fonts].some(font => font.family.includes('Source Sans 3') && font.status === 'loaded');
+        }''')
         page.locator('#auth-toggle').click()
         email = f'qa-{uuid.uuid4().hex}@example.com'
         password = uuid.uuid4().hex
