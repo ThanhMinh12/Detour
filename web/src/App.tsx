@@ -161,7 +161,7 @@ export default function App() {
   if (loading) return <main className="loading-state" aria-live="polite"><Brand /><h1>Loading your trips…</h1></main>;
 
   if (!user) return <section id="auth-screen" className="auth-screen" aria-labelledby="auth-title">
-    <div className="auth-story"><Brand /><div className="auth-story-copy"><h1>Trip planning</h1><p>Manage itineraries, reservations, and shared expenses.</p></div></div>
+    <div className="auth-story"><Brand /><div className="auth-story-copy"><h1>Trip planning</h1></div></div>
     <div className="auth-entry"><form id="auth-form" className="auth-card" onSubmit={event => {
       event.preventDefault(); const values = fields(event.currentTarget);
       void act(async () => {await refreshCsrf(); const session = await api<Session>(`/api/auth/${register ? 'register' : 'login'}`, 'POST', values); await refreshCsrf(); if (!session.user) throw new Error('Sign-in failed'); setUser(session.user); await loadTrips();});
